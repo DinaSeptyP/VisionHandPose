@@ -24,8 +24,8 @@ struct CameraPreviewView: UIViewRepresentable {
         // Ensure the preview layer fills the view and updates correctly on layout changes
         DispatchQueue.main.async {
             if let connection = view.previewLayer.connection {
-                if connection.isVideoOrientationSupported {
-                    connection.videoOrientation = .portrait
+                if connection.isVideoRotationAngleSupported(0.0) {
+                    connection.videoRotationAngle = 0.0
                 }
             }
         }
