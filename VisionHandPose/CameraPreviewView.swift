@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import UIKit
 
 /// A SwiftUI view that wraps AVCaptureVideoPreviewLayer to show the live camera feed
 struct CameraPreviewView: UIViewRepresentable {
@@ -13,6 +14,11 @@ struct CameraPreviewView: UIViewRepresentable {
         var previewLayer: AVCaptureVideoPreviewLayer {
             return layer as! AVCaptureVideoPreviewLayer
         }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            CameraPreviewView.configureVideoConnection(previewLayer.connection)
+        }
     }
     
     func makeUIView(context: Context) -> VideoPreviewView {
@@ -21,19 +27,38 @@ struct CameraPreviewView: UIViewRepresentable {
         view.previewLayer.session = session
         view.previewLayer.videoGravity = .resizeAspectFill
         
-        // Ensure the preview layer fills the view and updates correctly on layout changes
         DispatchQueue.main.async {
-            if let connection = view.previewLayer.connection {
-                if connection.isVideoRotationAngleSupported(0.0) {
-                    connection.videoRotationAngle = 0.0
-                }
-            }
+            CameraPreviewView.configureVideoConnection(view.previewLayer.connection)
         }
         
         return view
     }
     
     func updateUIView(_ uiView: VideoPreviewView, context: Context) {
-        // Handle orientation or configuration changes if necessary
+        Self.configureVideoConnection(uiView.previewLayer.connection)
+    }
+
+    private static func configureVideoConnection(_ connection: AVCaptureConnection?) {
+        guard let connection else { return }
+
+        let angle = videoRotationAngleForCurrentInterface()
+        if connection.isVideoRotationAngleSupported(angle) {
+            connection.videoRotationAngle = angle
+        }
+    }
+
+    private static func videoRotationAngleForCurrentInterface() -> CGFloat {
+        let orientation = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?
+            .interfaceOrientation
+
+        switch orientation {
+        case .portrait: return 0
+        case .portraitUpsideDown: return 180
+        case .landscapeLeft: return 270
+        case .landscapeRight: return 90
+        default: return 0
+        }
     }
 }
