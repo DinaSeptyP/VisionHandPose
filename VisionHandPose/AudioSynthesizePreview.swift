@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct AudioSynthesizePreview: View {
     @StateObject private var chordPlayer = ChordPlayer()
     let notes = ["C", "D", "E", "F", "G", "A", "B", "C2"]
     
@@ -112,5 +112,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    AudioSynthesizePreview()
 }
