@@ -13,6 +13,10 @@ struct ContentView: View {
     private let chordValidationDelay: Duration = .milliseconds(250)
     private let chordResetDelay: Duration = .milliseconds(900)
 
+    private var handIndicatorColor: Color {
+        manager.detectedHands.first?.readiness.indicatorColor ?? HandReadiness.noHand.indicatorColor
+    }
+
     private let bgGradient = LinearGradient(
         colors: [Color(red: 0.05, green: 0.05, blue: 0.1), Color(red: 0.1, green: 0.1, blue: 0.2)],
         startPoint: .top,
@@ -125,19 +129,15 @@ struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 24))
                 .overlay(
                     RoundedRectangle(cornerRadius: 24)
-                        .stroke(
-                            LinearGradient(
-                                colors: [.cyan.opacity(0.5), .purple.opacity(0.5)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 2
-                        )
+                        .stroke(handIndicatorColor.opacity(0.8), lineWidth: 4)
                 )
+                .shadow(color: handIndicatorColor.opacity(0.35), radius: 10)
 
             GeometryReader { geo in
                 let w = geo.size.width, h = geo.size.height
                 ForEach(manager.detectedHands) { hand in
+                    let indicatorColor = hand.readiness.indicatorColor
+
                     Path { path in
                         for line in hand.skeletonLines {
                             guard let first = line.first else { continue }
@@ -147,13 +147,13 @@ struct ContentView: View {
                             }
                         }
                     }
-                    .stroke(Color.cyan.opacity(0.7), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                    .stroke(indicatorColor.opacity(0.75), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
 
                     ForEach(Array(hand.joints.values)) { joint in
                         Circle()
-                            .fill(Color.cyan)
+                            .fill(indicatorColor)
                             .frame(width: 8, height: 8)
-                            .shadow(color: .cyan, radius: 4)
+                            .shadow(color: indicatorColor, radius: 4)
                             .position(x: joint.location.x * w, y: joint.location.y * h)
                     }
                 }
@@ -162,7 +162,7 @@ struct ContentView: View {
             VStack {
                 Spacer()
                 HStack {
-                    Image(systemName: "info.circle.fill").foregroundColor(.cyan)
+                    Image(systemName: "info.circle.fill").foregroundColor(handIndicatorColor)
                     Text(manager.statusMessage)
                         .font(.system(.caption, design: .monospaced))
                         .foregroundColor(.white)

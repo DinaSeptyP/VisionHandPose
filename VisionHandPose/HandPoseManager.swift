@@ -13,6 +13,38 @@ struct HandJointPoint: Identifiable, Equatable {
     let confidence: Float
 }
 
+enum HandReadiness {
+    case noHand
+    case partial
+    case tooFar
+    case tooClose
+    case ready
+
+    var canReadChord: Bool {
+        self == .ready
+    }
+
+    var statusMessage: String {
+        switch self {
+        case .noHand: return "No hands detected. Show your hand."
+        case .partial: return "Hand partially visible. Keep your full hand in frame."
+        case .tooFar: return "Move your hand closer."
+        case .tooClose: return "Move your hand farther away."
+        case .ready: return "Hand position ready."
+        }
+    }
+
+    var indicatorColor: Color {
+        switch self {
+        case .noHand: return .cyan
+        case .partial: return .orange
+        case .tooFar: return .yellow
+        case .tooClose: return .red
+        case .ready: return .green
+        }
+    }
+}
+
 enum MusicalChord: String {
     case none   = "—"
     case a      = "A"
@@ -91,6 +123,7 @@ struct HandPose: Identifiable {
     let chord: MusicalChord
     let confidence: Float
     let isLeftHand: Bool
+    let readiness: HandReadiness
 
     var skeletonLines: [[CGPoint]] {
         var lines: [[CGPoint]] = []
@@ -276,7 +309,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             let hands = (handPoseRequest.results ?? []).map { processObservation($0) }
             Task { @MainActor in
                 self.detectedHands = hands
-                self.statusMessage = hands.isEmpty ? "No hands detected. Show your hand." : "Tracking \(hands.count) hand(s)"
+                self.statusMessage = hands.first?.readiness.statusMessage ?? HandReadiness.noHand.statusMessage
             }
         } catch {
             print("Vision error: \(error.localizedDescription)")
@@ -312,12 +345,47 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             isLeftHand = thumbMP.location.x < littleMCP.location.x
         }
 
+        let readiness = evaluateReadiness(joints: joints)
+
         return HandPose(
             joints: joints,
-            chord: classifyChord(joints: joints),
+            chord: readiness.canReadChord ? classifyChord(joints: joints) : .none,
             confidence: observation.confidence,
-            isLeftHand: isLeftHand
+            isLeftHand: isLeftHand,
+            readiness: readiness
         )
+    }
+
+    private nonisolated func evaluateReadiness(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> HandReadiness {
+        guard !joints.isEmpty else { return .noHand }
+
+        let points = joints.values.map(\.location)
+        let minX = points.map(\.x).min() ?? 0
+        let maxX = points.map(\.x).max() ?? 0
+        let minY = points.map(\.y).min() ?? 0
+        let maxY = points.map(\.y).max() ?? 0
+        let width = maxX - minX
+        let height = maxY - minY
+        let maxDimension = max(width, height)
+        let averageConfidence = joints.values.reduce(Float(0)) { $0 + $1.confidence } / Float(joints.count)
+
+        if joints.count < 14 || averageConfidence < 0.45 {
+            return .partial
+        }
+
+        if minX < 0.03 || maxX > 0.97 || minY < 0.03 || maxY > 0.97 {
+            return .partial
+        }
+
+        if maxDimension < 0.22 {
+            return .tooFar
+        }
+
+        if maxDimension > 0.78 {
+            return .tooClose
+        }
+
+        return .ready
     }
 
     // MARK: - Chord Classification
