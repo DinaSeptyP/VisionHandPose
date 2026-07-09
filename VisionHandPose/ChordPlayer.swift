@@ -1,16 +1,7 @@
-//
-//  ChordPlayer.swift
-//  VisionHandPose
-//
-//  Created by Muhamad Yuan Sastro Dimianta on 07/07/26.
-//
-
 import AVFoundation
 import Combine
 
 // Per-note mutable state shared between the main thread and the audio render thread.
-// All properties are written by the main thread before `active` is set to true,
-// so the render thread only races on `active` itself (a Bool write/read) — acceptable here.
 private final class NoteState {
     let freq: Double
     var phase: Double = 0
@@ -25,21 +16,23 @@ private final class NoteState {
 class ChordPlayer: ObservableObject {
     private let engine = AVAudioEngine()
     private let sampleRate: Double = 44100
-    private let baseAmplitude: Float = 0.5
+    private let baseAmplitude: Float = 0.35
     private let outputGain: Float = 6.0
     private var noteStates: [String: NoteState] = [:]
 
-    // Note name to MIDI number mapping (octave 4)
+    // Note name to MIDI number mapping covering multiple octaves for realistic guitar voicing
     let noteMap: [String: UInt8] = [
-        "C": 60, "C#": 61, "D": 62, "D#": 63, "E": 64,
-        "F": 65, "F#": 66, "G": 67, "G#": 68,
-        "A": 69, "A#": 70, "B": 71,
-        "C2": 72   // C one octave above middle C
+        // Octave 3 (Low / Bass strings)
+        "C3": 48, "C#3": 49, "D3": 50, "D#3": 51, "E3": 52, "F3": 53, "F#3": 54, "G3": 55, "G#3": 56, "A3": 57, "A#3": 58, "B3": 59,
+        // Octave 4 (Middle strings)
+        "C": 60, "C#": 61, "D": 62, "D#": 63, "E": 64, "F": 65, "F#": 66, "G": 67, "G#": 68, "A": 69, "A#": 70, "B": 71,
+        // Octave 5 (High strings)
+        "C5": 72, "C#5": 73, "D5": 74, "D#5": 75, "E5": 76, "F5": 77, "F#5": 78, "G5": 79, "G#5": 80, "A5": 81, "A#5": 82, "B5": 83,
+        // Compatibility
+        "C2": 72
     ]
 
     init() {
-        // .playAndRecord lets the engine coexist with AVCaptureSession;
-        // .defaultToSpeaker routes output to the speaker instead of the earpiece.
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .mixWithOthers])
@@ -53,7 +46,6 @@ class ChordPlayer: ObservableObject {
         let amplitude = baseAmplitude * outputGain
 
         // Pre-allocate one oscillator node per note before the engine starts.
-        // Never add or remove nodes while the engine is running — that's what caused the graph crash.
         for (name, midi) in noteMap {
             let freq = 440.0 * pow(2.0, (Double(midi) - 69.0) / 12.0)
             let state = NoteState(freq: freq)
@@ -72,18 +64,38 @@ class ChordPlayer: ObservableObject {
 
                 for f in 0..<count {
                     let t = state.cursor + f
-                    let env: Float
+
+                    // Envelope as Double
+                    let env: Double
                     if t < state.attackFrames {
-                        env = Float(t) / Float(max(state.attackFrames, 1))
-                    } else if t < state.totalFrames {
-                        env = 1.0 - Float(t - state.attackFrames) / Float(max(state.totalFrames - state.attackFrames, 1))
+                        env = Double(t) / Double(max(state.attackFrames, 1))
                     } else {
-                        env = 0
+                        env = 1.0
                     }
-                    let rawSample = Float(sin(state.phase)) * env * amplitude
-                    let sample = Float(tanh(Double(rawSample)))
+
+                    let elapsed = Double(t - state.attackFrames)
+                    let total = Double(max(state.totalFrames - state.attackFrames, 1))
+
+                    // Acoustic Physical Modelling (Double precision)
+                    let envFund = exp(-2.8 * elapsed / total)
+                    let envHarm = exp(-8.5 * elapsed / total)
+
+                    let phase = state.phase
+                    let primary = sin(phase) * envFund
+                    let harm1 = 0.35 * sin(2.0 * phase) * envHarm  // 2nd Harmonic (Octave)
+                    let harm2 = 0.15 * sin(3.0 * phase) * envHarm  // 3rd Harmonic (Fifth)
+
+                    // Sharp transient noise at the initial pluck (decays in 15ms)
+                    let noiseDecay = exp(-elapsed / (sr * 0.015))
+                    let pluckNoise = Double(Float.random(in: -0.06...0.06)) * noiseDecay
+
+                    // Warm soft-clipping using tanh
+                    let rawSample = (primary + harm1 + harm2) * env * Double(amplitude) + pluckNoise * env
+                    let sample = Float(tanh(rawSample))
+
                     state.phase += 2.0 * Double.pi * freq / sr
                     if state.phase > 2.0 * Double.pi { state.phase -= 2.0 * Double.pi }
+
                     for buf in ptr {
                         buf.mData?.assumingMemoryBound(to: Float.self)[f] = sample
                     }
@@ -105,13 +117,13 @@ class ChordPlayer: ObservableObject {
         }
     }
 
-    func playNote(_ name: String, duration: TimeInterval = 1.5) {
+    func playNote(_ name: String, duration: TimeInterval = 1.8) {
         guard let state = noteStates[name] else { return }
         state.active = false
         state.phase = 0
         state.cursor = 0
         state.totalFrames = Int(sampleRate * duration)
-        state.attackFrames = Int(sampleRate * 0.005)
+        state.attackFrames = Int(sampleRate * 0.003) // ultra-sharp attack for pluck
         state.active = true
     }
 
