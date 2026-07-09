@@ -3,6 +3,7 @@ import AVFoundation
 import Vision
 import Combine
 import SwiftUI
+import UIKit
 
 // MARK: - Models
 
@@ -10,6 +11,38 @@ struct HandJointPoint: Identifiable, Equatable {
     let id: String
     let location: CGPoint
     let confidence: Float
+}
+
+enum HandReadiness {
+    case noHand
+    case partial
+    case tooFar
+    case tooClose
+    case ready
+
+    var canReadChord: Bool {
+        self == .ready
+    }
+
+    var statusMessage: String {
+        switch self {
+        case .noHand: return "No hands detected. Show your hand."
+        case .partial: return "Hand partially visible. Keep your full hand in frame."
+        case .tooFar: return "Move your hand closer."
+        case .tooClose: return "Move your hand farther away."
+        case .ready: return "Hand position ready."
+        }
+    }
+
+    var indicatorColor: Color {
+        switch self {
+        case .noHand: return .cyan
+        case .partial: return .orange
+        case .tooFar: return .yellow
+        case .tooClose: return .red
+        case .ready: return .green
+        }
+    }
 }
 
 enum MusicalChord: String {
@@ -49,18 +82,37 @@ enum MusicalChord: String {
     var fingerPattern: String {
         switch self {
         case .none:   return "No chord detected"
-        case .a:      return "All fingers curled — fist"
+        case .a:      return "Thumb only — thumbs up"
         case .aSharp: return "Thumb + little finger — hang loose"
-        case .b:      return "Index + little finger — devil horns"
+        case .b:      return "Thumb + index — L-shape"
         case .c:      return "Index finger only"
-        case .cSharp: return "Thumb + index — L-shape"
+        case .cSharp: return "Index + little finger — devil horns"
         case .d:      return "Index + middle — peace sign"
         case .dSharp: return "Index + middle + ring"
         case .e:      return "Index + middle + ring + little"
-        case .f:      return "All five fingers — open hand"
-        case .fSharp: return "Thumb + index + middle + ring"
-        case .g:      return "Thumb + index + middle"
-        case .gSharp: return "Middle + ring + little"
+        case .f:      return "Index + middle + ring + little — all except thumb"
+        case .fSharp: return "Thumb + index + middle"
+        case .g:      return "All five fingers — open hand"
+        case .gSharp: return "Thumb + index + middle + little — all except ring"
+        }
+    }
+
+    // Notes (as ChordPlayer note names) that make up the chord for this pose
+    var notes: [String] {
+        switch self {
+        case .none:   return []
+        case .a:      return ["A", "C#", "E"]
+        case .aSharp: return ["A#", "D", "F"]
+        case .b:      return ["B", "D", "F#"]
+        case .c:      return ["C", "E", "G"]
+        case .cSharp: return ["C#", "E", "G#"]
+        case .d:      return ["D", "F#", "A"]
+        case .dSharp: return ["D#", "G", "A#"]
+        case .e:      return ["E", "G", "B"]
+        case .f:      return ["F", "A", "C2"]
+        case .fSharp: return ["F#", "A", "C#"]
+        case .g:      return ["G", "B", "D"]
+        case .gSharp: return ["G#", "C", "D#"]
         }
     }
 }
@@ -71,6 +123,7 @@ struct HandPose: Identifiable {
     let chord: MusicalChord
     let confidence: Float
     let isLeftHand: Bool
+    let readiness: HandReadiness
 
     var skeletonLines: [[CGPoint]] {
         var lines: [[CGPoint]] = []
@@ -108,7 +161,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "com.visionhandpose.sessionQueue")
     private var videoOutput = AVCaptureVideoDataOutput()
-    private var handPoseRequest = VNDetectHumanHandPoseRequest()
+    nonisolated(unsafe) private var handPoseRequest = VNDetectHumanHandPoseRequest()
 
     override init() {
         super.init()
@@ -143,13 +196,16 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     func startSession() {
         sessionQueue.async { [weak self] in
             guard let self else { return }
-            if session.isRunning { return }
+            if session.isRunning {
+                session.stopRunning()
+            }
 
             session.beginConfiguration()
             session.inputs.forEach { self.session.removeInput($0) }
             session.outputs.forEach { self.session.removeOutput($0) }
 
             guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: activeCameraPosition) else {
+                session.commitConfiguration()
                 DispatchQueue.main.async { self.statusMessage = "No camera found." }
                 return
             }
@@ -157,12 +213,14 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             do {
                 let input = try AVCaptureDeviceInput(device: camera)
                 guard session.canAddInput(input) else {
+                    session.commitConfiguration()
                     DispatchQueue.main.async { self.statusMessage = "Cannot add camera input." }
                     return
                 }
                 session.addInput(input)
 
                 guard session.canAddOutput(videoOutput) else {
+                    session.commitConfiguration()
                     DispatchQueue.main.async { self.statusMessage = "Cannot add video output." }
                     return
                 }
@@ -172,14 +230,14 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                 videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
 
                 if let conn = videoOutput.connection(with: .video) {
-                    conn.videoRotationAngle = 0.0
-                    conn.isVideoMirrored = (activeCameraPosition == .front)
+                    self.configureVideoConnection(conn)
                 }
 
                 session.commitConfiguration()
                 session.startRunning()
                 DispatchQueue.main.async { self.statusMessage = "Tracking active. Show your hand." }
             } catch {
+                session.commitConfiguration()
                 DispatchQueue.main.async { self.statusMessage = "Camera setup failed: \(error.localizedDescription)" }
             }
         }
@@ -197,6 +255,49 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         startSession()
     }
 
+    func updateVideoOrientation() {
+        sessionQueue.async { [weak self] in
+            guard let self, let conn = videoOutput.connection(with: .video) else { return }
+            self.configureVideoConnection(conn)
+        }
+    }
+
+    private func configureVideoConnection(_ connection: AVCaptureConnection) {
+        let angle = Self.currentVideoRotationAngle()
+        if connection.isVideoRotationAngleSupported(angle) {
+            connection.videoRotationAngle = angle
+        }
+
+        if connection.isVideoMirroringSupported {
+            connection.isVideoMirrored = (activeCameraPosition == .front)
+        }
+    }
+
+    private static func currentVideoRotationAngle() -> CGFloat {
+        if Thread.isMainThread {
+            return videoRotationAngleForCurrentInterface()
+        }
+
+        return DispatchQueue.main.sync {
+            videoRotationAngleForCurrentInterface()
+        }
+    }
+
+    private static func videoRotationAngleForCurrentInterface() -> CGFloat {
+        let orientation = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?
+            .interfaceOrientation
+
+        switch orientation {
+        case .portrait: return 0
+        case .portraitUpsideDown: return 180
+        case .landscapeLeft: return 270
+        case .landscapeRight: return 90
+        default: return 0
+        }
+    }
+
     // MARK: - Video Sample Buffer Delegate
 
     nonisolated func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
@@ -208,7 +309,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             let hands = (handPoseRequest.results ?? []).map { processObservation($0) }
             Task { @MainActor in
                 self.detectedHands = hands
-                self.statusMessage = hands.isEmpty ? "No hands detected. Show your hand." : "Tracking \(hands.count) hand(s)"
+                self.statusMessage = hands.first?.readiness.statusMessage ?? HandReadiness.noHand.statusMessage
             }
         } catch {
             print("Vision error: \(error.localizedDescription)")
@@ -217,7 +318,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
     // MARK: - Observation Processing
 
-    private func processObservation(_ observation: VNHumanHandPoseObservation) -> HandPose {
+    private nonisolated func processObservation(_ observation: VNHumanHandPoseObservation) -> HandPose {
         var joints: [VNHumanHandPoseObservation.JointName: HandJointPoint] = [:]
 
         let allJoints: [VNHumanHandPoseObservation.JointName] = [
@@ -244,12 +345,47 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             isLeftHand = thumbMP.location.x < littleMCP.location.x
         }
 
+        let readiness = evaluateReadiness(joints: joints)
+
         return HandPose(
             joints: joints,
-            chord: classifyChord(joints: joints),
+            chord: readiness.canReadChord ? classifyChord(joints: joints) : .none,
             confidence: observation.confidence,
-            isLeftHand: isLeftHand
+            isLeftHand: isLeftHand,
+            readiness: readiness
         )
+    }
+
+    private nonisolated func evaluateReadiness(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> HandReadiness {
+        guard !joints.isEmpty else { return .noHand }
+
+        let points = joints.values.map(\.location)
+        let minX = points.map(\.x).min() ?? 0
+        let maxX = points.map(\.x).max() ?? 0
+        let minY = points.map(\.y).min() ?? 0
+        let maxY = points.map(\.y).max() ?? 0
+        let width = maxX - minX
+        let height = maxY - minY
+        let maxDimension = max(width, height)
+        let averageConfidence = joints.values.reduce(Float(0)) { $0 + $1.confidence } / Float(joints.count)
+
+        if joints.count < 14 || averageConfidence < 0.45 {
+            return .partial
+        }
+
+        if minX < 0.03 || maxX > 0.97 || minY < 0.03 || maxY > 0.97 {
+            return .partial
+        }
+
+        if maxDimension < 0.22 {
+            return .tooFar
+        }
+
+        if maxDimension > 0.78 {
+            return .tooClose
+        }
+
+        return .ready
     }
 
     // MARK: - Chord Classification
@@ -260,18 +396,18 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     // (thumb, index, middle, ring, little)
     //  A      → (T,F,F,F,F)  — thumb
     //  A#     → (T,F,F,F,T)  — thumb + little (hang loose)
-    //  B      → (T,T,F,F,F)  — index + little (L-shape)
+    //  B      → (T,T,F,F,F)  — thumb + index — L-shape
     //  C      → (F,T,F,F,F)  — index only
-    //  C#     → (F,T,F,F,T)  — thumb + little
+    //  C#     → (F,T,F,F,T)  — index + little — devil horns
     //  D      → (F,T,T,F,F)  — index + middle (peace)
     //  D#     → (F,T,T,F,T)  — index + middle + little
     //  E      → (F,T,T,T,F)  — index + middle + ring
     //  F      → (F,T,T,T,T)  — all except thumb
     //  F#     → (T,T,T,F,F)  — all except ring + little
-    //  G      → (T,T,T,F,F)  — open hand
+    //  G      → (T,T,T,T,T)  — open hand — all five fingers
     //  G#     → (T,T,T,F,T)  — all except ring
 
-    private func classifyChord(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> MusicalChord {
+    private nonisolated func classifyChord(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> MusicalChord {
         guard
             let thumbTip  = joints[.thumbTip],
             let indexTip  = joints[.indexTip],
@@ -304,7 +440,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         }
     }
 
-    private func dist(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
+    private nonisolated func dist(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
         hypot(a.x - b.x, a.y - b.y)
     }
 }

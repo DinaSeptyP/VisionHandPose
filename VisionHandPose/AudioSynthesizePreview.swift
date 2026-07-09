@@ -1,6 +1,6 @@
 //
-//  ContentView.swift
-//  AVFoundationLearn
+//  AudioSynthesizePreview.swift
+//  VisionHandPose
 //
 //  Created by Muhamad Yuan Sastro Dimianta on 07/07/26.
 //
