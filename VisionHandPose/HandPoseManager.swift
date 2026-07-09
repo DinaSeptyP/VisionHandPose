@@ -115,6 +115,38 @@ enum MusicalChord: String {
         case .gSharp: return ["G#", "C", "D#"]
         }
     }
+
+    // The 6-string voicing mapped to the string indices (0 = string 6, 5 = string 1)
+    var guitarStrings: [String] {
+        switch self {
+        case .none:
+            return ["", "", "", "", "", ""]
+        case .a:
+            return ["E3", "A3", "E", "A", "C#5", "E5"]
+        case .aSharp:
+            return ["F3", "A#3", "F", "A#", "D5", "F5"]
+        case .b:
+            return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
+        case .c:
+            return ["E3", "C", "E", "G", "C5", "E5"]
+        case .cSharp:
+            return ["F3", "C#", "F", "G#", "C#5", "F5"]
+        case .d:
+            return ["D3", "A3", "D", "F#", "A", "D5"]
+        case .dSharp:
+            return ["D#3", "A#3", "D#", "G", "A#", "D#5"]
+        case .e: // E Minor voicing
+            return ["E3", "B3", "E", "G", "B", "E5"]
+        case .f:
+            return ["F3", "C", "F", "A", "C5", "F5"]
+        case .fSharp:
+            return ["F#3", "C#", "F#", "A#", "C#5", "F#5"]
+        case .g:
+            return ["G3", "B3", "D", "G", "B", "G5"]
+        case .gSharp:
+            return ["G#3", "C", "D#", "G#", "C5", "G#5"]
+        }
+    }
 }
 
 struct HandPose: Identifiable {
@@ -124,6 +156,7 @@ struct HandPose: Identifiable {
     let confidence: Float
     let isLeftHand: Bool
     let readiness: HandReadiness
+    let isStrumHand: Bool
 
     var skeletonLines: [[CGPoint]] {
         var lines: [[CGPoint]] = []
@@ -158,10 +191,25 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     @Published var statusMessage: String = "Initializing..."
     @Published var activeCameraPosition: AVCaptureDevice.Position = .front
 
+    // Guitar specific state
+    @Published var activeChord: MusicalChord = .none
+    @Published var isRightHanded: Bool = true // Left side = Chord, Right side = Strum
+    @Published var chordHand: HandPose? = nil
+    @Published var strumHand: HandPose? = nil
+
+    // Combine event publisher for strumming triggers (main-thread safe)
+    let stringPluckedSubject = PassthroughSubject<Int, Never>()
+
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "com.visionhandpose.sessionQueue")
     private var videoOutput = AVCaptureVideoDataOutput()
     nonisolated(unsafe) private var handPoseRequest = VNDetectHumanHandPoseRequest()
+
+    // Strum crossing detection variables (accessed only on serial video queue)
+    private var lastStrumY: CGFloat? = nil
+    private var lastTriggerTimes: [Int: Date] = [:]
+    private let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+    private let debounceInterval: TimeInterval = 0.10 // 100ms debounce per string for fast play
 
     override init() {
         super.init()
@@ -306,11 +354,112 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up, options: [:])
         do {
             try handler.perform([handPoseRequest])
-            let hands = (handPoseRequest.results ?? []).map { processObservation($0) }
-            Task { @MainActor in
-                self.detectedHands = hands
-                self.statusMessage = hands.first?.readiness.statusMessage ?? HandReadiness.noHand.statusMessage
+            
+            let observations = handPoseRequest.results ?? []
+            let rawHands = observations.map { processObservation($0) }
+            
+            // Separate hands into chord hand and strum hand based on X coordinate and isRightHanded configuration
+            var cHand: HandPose? = nil
+            var sHand: HandPose? = nil
+            let rightHandedVal = self.isRightHanded // read main-actor property safely on BG thread (it's atomic/read-only in this context)
+            
+            for hand in rawHands {
+                if let wrist = hand.joints[.wrist] {
+                    // Right handed: Chord hand on Left (x < 0.5), Strum hand on Right (x >= 0.5)
+                    // Left handed: Chord hand on Right (x >= 0.5), Strum hand on Left (x < 0.5)
+                    let isStrumSide = rightHandedVal ? (wrist.location.x >= 0.5) : (wrist.location.x < 0.5)
+                    if isStrumSide {
+                        if sHand == nil { sHand = hand }
+                    } else {
+                        if cHand == nil { cHand = hand }
+                    }
+                }
             }
+            
+            // Classify chord from Chord Hand
+            var detectedChord: MusicalChord = .none
+            if let chordHand = cHand {
+                if chordHand.readiness.canReadChord {
+                    detectedChord = classifyChord(joints: chordHand.joints)
+                }
+            }
+            
+            // Process Strum Hand & check Y-crossings against strings
+            if let strumHand = sHand, let indexTip = strumHand.joints[.indexTip] {
+                let currentY = indexTip.location.y
+                
+                if let lastY = lastStrumY {
+                    for i in 0..<stringYPositions.count {
+                        let stringY = stringYPositions[i]
+                        
+                        // Crossed if lastY and currentY are on opposite sides of stringY
+                        let crossed = (lastY - stringY) * (currentY - stringY) <= 0 && lastY != currentY
+                        
+                        if crossed {
+                            let now = Date()
+                            let lastTime = lastTriggerTimes[i] ?? Date.distantPast
+                            if now.timeIntervalSince(lastTime) >= debounceInterval {
+                                lastTriggerTimes[i] = now
+                                
+                                // Send crossing event to main thread
+                                let index = i
+                                Task { @MainActor in
+                                    self.stringPluckedSubject.send(index)
+                                }
+                            }
+                        }
+                    }
+                }
+                lastStrumY = currentY
+            } else {
+                lastStrumY = nil
+            }
+            
+            // Reconstruct final HandPose states with correct attributes
+            let finalCHand = cHand.map {
+                HandPose(
+                    joints: $0.joints,
+                    chord: detectedChord,
+                    confidence: $0.confidence,
+                    isLeftHand: $0.isLeftHand,
+                    readiness: $0.readiness,
+                    isStrumHand: false
+                )
+            }
+            
+            let finalSHand = sHand.map {
+                HandPose(
+                    joints: $0.joints,
+                    chord: .none,
+                    confidence: $0.confidence,
+                    isLeftHand: $0.isLeftHand,
+                    readiness: $0.readiness,
+                    isStrumHand: true
+                )
+            }
+            
+            Task { @MainActor in
+                self.chordHand = finalCHand
+                self.strumHand = finalSHand
+                self.activeChord = detectedChord
+                
+                var handsList: [HandPose] = []
+                if let c = finalCHand { handsList.append(c) }
+                if let s = finalSHand { handsList.append(s) }
+                self.detectedHands = handsList
+                
+                // Status Messaging
+                if finalCHand == nil && finalSHand == nil {
+                    self.statusMessage = "No hands detected. Left side = Chord, Right side = Strum."
+                } else if finalCHand != nil && finalSHand == nil {
+                    self.statusMessage = "Chord hand active (\(detectedChord.rawValue)). Raise strum hand on right."
+                } else if finalCHand == nil && finalSHand != nil {
+                    self.statusMessage = "Strum hand active. Raise chord hand on left."
+                } else {
+                    self.statusMessage = "Guitar ready! Hold chord on left, strum strings on right."
+                }
+            }
+            
         } catch {
             print("Vision error: \(error.localizedDescription)")
         }
@@ -349,10 +498,11 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
         return HandPose(
             joints: joints,
-            chord: readiness.canReadChord ? classifyChord(joints: joints) : .none,
+            chord: .none, // Decided later in main loop
             confidence: observation.confidence,
             isLeftHand: isLeftHand,
-            readiness: readiness
+            readiness: readiness,
+            isStrumHand: false // Decided later
         )
     }
 
@@ -373,15 +523,15 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             return .partial
         }
 
-        if minX < 0.03 || maxX > 0.97 || minY < 0.03 || maxY > 0.97 {
+        if minX < 0.01 || maxX > 0.99 || minY < 0.01 || maxY > 0.99 {
             return .partial
         }
 
-        if maxDimension < 0.22 {
+        if maxDimension < 0.20 {
             return .tooFar
         }
 
-        if maxDimension > 0.78 {
+        if maxDimension > 0.80 {
             return .tooClose
         }
 
@@ -389,23 +539,6 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     }
 
     // MARK: - Chord Classification
-    //
-    // Each chord maps to a unique combination of extended fingers.
-    // "Extended" means the fingertip is farther from its base knuckle than a threshold.
-    //
-    // (thumb, index, middle, ring, little)
-    //  A      → (T,F,F,F,F)  — thumb
-    //  A#     → (T,F,F,F,T)  — thumb + little (hang loose)
-    //  B      → (T,T,F,F,F)  — thumb + index — L-shape
-    //  C      → (F,T,F,F,F)  — index only
-    //  C#     → (F,T,F,F,T)  — index + little — devil horns
-    //  D      → (F,T,T,F,F)  — index + middle (peace)
-    //  D#     → (F,T,T,F,T)  — index + middle + little
-    //  E      → (F,T,T,T,F)  — index + middle + ring
-    //  F      → (F,T,T,T,T)  — all except thumb
-    //  F#     → (T,T,T,F,F)  — all except ring + little
-    //  G      → (T,T,T,T,T)  — open hand — all five fingers
-    //  G#     → (T,T,T,F,T)  — all except ring
 
     private nonisolated func classifyChord(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> MusicalChord {
         guard
