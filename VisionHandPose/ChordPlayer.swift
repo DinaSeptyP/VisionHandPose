@@ -25,6 +25,8 @@ private final class NoteState {
 class ChordPlayer: ObservableObject {
     private let engine = AVAudioEngine()
     private let sampleRate: Double = 44100
+    private let baseAmplitude: Float = 0.5
+    private let outputGain: Float = 6.0
     private var noteStates: [String: NoteState] = [:]
 
     // Note name to MIDI number mapping (octave 4)
@@ -48,6 +50,7 @@ class ChordPlayer: ObservableObject {
 
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)!
         let sr = sampleRate
+        let amplitude = baseAmplitude * outputGain
 
         // Pre-allocate one oscillator node per note before the engine starts.
         // Never add or remove nodes while the engine is running — that's what caused the graph crash.
@@ -77,7 +80,8 @@ class ChordPlayer: ObservableObject {
                     } else {
                         env = 0
                     }
-                    let sample = Float(sin(state.phase)) * env * 0.5
+                    let rawSample = Float(sin(state.phase)) * env * amplitude
+                    let sample = Float(tanh(Double(rawSample)))
                     state.phase += 2.0 * Double.pi * freq / sr
                     if state.phase > 2.0 * Double.pi { state.phase -= 2.0 * Double.pi }
                     for buf in ptr {
@@ -115,7 +119,12 @@ class ChordPlayer: ObservableObject {
         noteStates[name]?.active = false
     }
 
+    func stopAllNotes() {
+        noteStates.values.forEach { $0.active = false }
+    }
+
     func playChord(_ notes: [String]) {
+        stopAllNotes()
         notes.forEach { playNote($0) }
     }
 

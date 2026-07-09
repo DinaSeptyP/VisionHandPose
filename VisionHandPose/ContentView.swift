@@ -1,9 +1,17 @@
 import SwiftUI
 import Vision
+import UIKit
 
 struct ContentView: View {
     @StateObject private var manager = HandPoseManager()
     @StateObject private var chordPlayer = ChordPlayer()
+    @State private var pendingChord: MusicalChord = .none
+    @State private var lastPlayedChord: MusicalChord = .none
+    @State private var chordValidationTask: Task<Void, Never>?
+    @State private var isLandscape = false
+
+    private let chordValidationDelay: Duration = .milliseconds(250)
+    private let chordResetDelay: Duration = .milliseconds(900)
 
     private let bgGradient = LinearGradient(
         colors: [Color(red: 0.05, green: 0.05, blue: 0.1), Color(red: 0.1, green: 0.1, blue: 0.2)],
@@ -28,12 +36,56 @@ struct ContentView: View {
                 permissionView
             }
         }
-        .onAppear { manager.checkPermissionAndStart() }
-        .onDisappear { manager.stopSession() }
-        .onChange(of: manager.detectedHands.first?.chord) { _, chord in
-            guard let chord, chord != .none else { return }
-            chordPlayer.playChord(chord.notes)
+        .onAppear {
+            updateInterfaceOrientation()
+            manager.checkPermissionAndStart()
         }
+        .onDisappear {
+            chordValidationTask?.cancel()
+            chordPlayer.stopAllNotes()
+            manager.stopSession()
+        }
+        .onChange(of: manager.detectedHands.first?.chord) { _, chord in
+            validateChordForPlayback(chord ?? .none)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            updateInterfaceOrientation()
+            manager.updateVideoOrientation()
+        }
+    }
+
+    private func validateChordForPlayback(_ chord: MusicalChord) {
+        pendingChord = chord
+        chordValidationTask?.cancel()
+        let delay = chord == .none ? chordResetDelay : chordValidationDelay
+
+        chordValidationTask = Task {
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run {
+                guard pendingChord == chord else { return }
+
+                if chord == .none {
+                    lastPlayedChord = .none
+                    chordPlayer.stopAllNotes()
+                    return
+                }
+
+                guard chord != lastPlayedChord else { return }
+                lastPlayedChord = chord
+                chordPlayer.playChord(chord.notes)
+            }
+        }
+    }
+
+    private func updateInterfaceOrientation() {
+        let orientation = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?
+            .interfaceOrientation
+
+        isLandscape = orientation?.isLandscape == true
     }
 
     // MARK: - Header
@@ -65,7 +117,7 @@ struct ContentView: View {
         .padding(.horizontal, 4)
     }
 
-    // MARK: - Camera Container (9:16)
+    // MARK: - Camera Container
 
     private var cameraContainerView: some View {
         ZStack {
@@ -122,7 +174,7 @@ struct ContentView: View {
                 .padding(.bottom, 16)
             }
         }
-        .aspectRatio(9.0 / 16.0, contentMode: .fit)
+        .aspectRatio(isLandscape ? 16.0 / 9.0 : 9.0 / 16.0, contentMode: .fit)
         .background(Color.black.opacity(0.3))
         .cornerRadius(24)
     }

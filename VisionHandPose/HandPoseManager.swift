@@ -3,6 +3,7 @@ import AVFoundation
 import Vision
 import Combine
 import SwiftUI
+import UIKit
 
 // MARK: - Models
 
@@ -162,13 +163,16 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     func startSession() {
         sessionQueue.async { [weak self] in
             guard let self else { return }
-            if session.isRunning { return }
+            if session.isRunning {
+                session.stopRunning()
+            }
 
             session.beginConfiguration()
             session.inputs.forEach { self.session.removeInput($0) }
             session.outputs.forEach { self.session.removeOutput($0) }
 
             guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: activeCameraPosition) else {
+                session.commitConfiguration()
                 DispatchQueue.main.async { self.statusMessage = "No camera found." }
                 return
             }
@@ -176,12 +180,14 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             do {
                 let input = try AVCaptureDeviceInput(device: camera)
                 guard session.canAddInput(input) else {
+                    session.commitConfiguration()
                     DispatchQueue.main.async { self.statusMessage = "Cannot add camera input." }
                     return
                 }
                 session.addInput(input)
 
                 guard session.canAddOutput(videoOutput) else {
+                    session.commitConfiguration()
                     DispatchQueue.main.async { self.statusMessage = "Cannot add video output." }
                     return
                 }
@@ -191,14 +197,14 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                 videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
 
                 if let conn = videoOutput.connection(with: .video) {
-                    conn.videoRotationAngle = 0.0
-                    conn.isVideoMirrored = (activeCameraPosition == .front)
+                    self.configureVideoConnection(conn)
                 }
 
                 session.commitConfiguration()
                 session.startRunning()
                 DispatchQueue.main.async { self.statusMessage = "Tracking active. Show your hand." }
             } catch {
+                session.commitConfiguration()
                 DispatchQueue.main.async { self.statusMessage = "Camera setup failed: \(error.localizedDescription)" }
             }
         }
@@ -214,6 +220,49 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     func toggleCamera() {
         activeCameraPosition = (activeCameraPosition == .front) ? .back : .front
         startSession()
+    }
+
+    func updateVideoOrientation() {
+        sessionQueue.async { [weak self] in
+            guard let self, let conn = videoOutput.connection(with: .video) else { return }
+            self.configureVideoConnection(conn)
+        }
+    }
+
+    private func configureVideoConnection(_ connection: AVCaptureConnection) {
+        let angle = Self.currentVideoRotationAngle()
+        if connection.isVideoRotationAngleSupported(angle) {
+            connection.videoRotationAngle = angle
+        }
+
+        if connection.isVideoMirroringSupported {
+            connection.isVideoMirrored = (activeCameraPosition == .front)
+        }
+    }
+
+    private static func currentVideoRotationAngle() -> CGFloat {
+        if Thread.isMainThread {
+            return videoRotationAngleForCurrentInterface()
+        }
+
+        return DispatchQueue.main.sync {
+            videoRotationAngleForCurrentInterface()
+        }
+    }
+
+    private static func videoRotationAngleForCurrentInterface() -> CGFloat {
+        let orientation = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?
+            .interfaceOrientation
+
+        switch orientation {
+        case .portrait: return 0
+        case .portraitUpsideDown: return 180
+        case .landscapeLeft: return 270
+        case .landscapeRight: return 90
+        default: return 0
+        }
     }
 
     // MARK: - Video Sample Buffer Delegate
