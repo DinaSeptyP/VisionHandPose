@@ -49,18 +49,37 @@ enum MusicalChord: String {
     var fingerPattern: String {
         switch self {
         case .none:   return "No chord detected"
-        case .a:      return "All fingers curled — fist"
+        case .a:      return "Thumb only — thumbs up"
         case .aSharp: return "Thumb + little finger — hang loose"
-        case .b:      return "Index + little finger — devil horns"
+        case .b:      return "Thumb + index — L-shape"
         case .c:      return "Index finger only"
-        case .cSharp: return "Thumb + index — L-shape"
+        case .cSharp: return "Index + little finger — devil horns"
         case .d:      return "Index + middle — peace sign"
         case .dSharp: return "Index + middle + ring"
         case .e:      return "Index + middle + ring + little"
-        case .f:      return "All five fingers — open hand"
-        case .fSharp: return "Thumb + index + middle + ring"
-        case .g:      return "Thumb + index + middle"
-        case .gSharp: return "Middle + ring + little"
+        case .f:      return "Index + middle + ring + little — all except thumb"
+        case .fSharp: return "Thumb + index + middle"
+        case .g:      return "All five fingers — open hand"
+        case .gSharp: return "Thumb + index + middle + little — all except ring"
+        }
+    }
+
+    // Notes (as ChordPlayer note names) that make up the chord for this pose
+    var notes: [String] {
+        switch self {
+        case .none:   return []
+        case .a:      return ["A", "C#", "E"]
+        case .aSharp: return ["A#", "D", "F"]
+        case .b:      return ["B", "D", "F#"]
+        case .c:      return ["C", "E", "G"]
+        case .cSharp: return ["C#", "E", "G#"]
+        case .d:      return ["D", "F#", "A"]
+        case .dSharp: return ["D#", "G", "A#"]
+        case .e:      return ["E", "G", "B"]
+        case .f:      return ["F", "A", "C2"]
+        case .fSharp: return ["F#", "A", "C#"]
+        case .g:      return ["G", "B", "D"]
+        case .gSharp: return ["G#", "C", "D#"]
         }
     }
 }
@@ -108,7 +127,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "com.visionhandpose.sessionQueue")
     private var videoOutput = AVCaptureVideoDataOutput()
-    private var handPoseRequest = VNDetectHumanHandPoseRequest()
+    nonisolated(unsafe) private var handPoseRequest = VNDetectHumanHandPoseRequest()
 
     override init() {
         super.init()
@@ -217,7 +236,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
     // MARK: - Observation Processing
 
-    private func processObservation(_ observation: VNHumanHandPoseObservation) -> HandPose {
+    private nonisolated func processObservation(_ observation: VNHumanHandPoseObservation) -> HandPose {
         var joints: [VNHumanHandPoseObservation.JointName: HandJointPoint] = [:]
 
         let allJoints: [VNHumanHandPoseObservation.JointName] = [
@@ -260,18 +279,18 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     // (thumb, index, middle, ring, little)
     //  A      → (T,F,F,F,F)  — thumb
     //  A#     → (T,F,F,F,T)  — thumb + little (hang loose)
-    //  B      → (T,T,F,F,F)  — index + little (L-shape)
+    //  B      → (T,T,F,F,F)  — thumb + index — L-shape
     //  C      → (F,T,F,F,F)  — index only
-    //  C#     → (F,T,F,F,T)  — thumb + little
+    //  C#     → (F,T,F,F,T)  — index + little — devil horns
     //  D      → (F,T,T,F,F)  — index + middle (peace)
     //  D#     → (F,T,T,F,T)  — index + middle + little
     //  E      → (F,T,T,T,F)  — index + middle + ring
     //  F      → (F,T,T,T,T)  — all except thumb
     //  F#     → (T,T,T,F,F)  — all except ring + little
-    //  G      → (T,T,T,F,F)  — open hand
+    //  G      → (T,T,T,T,T)  — open hand — all five fingers
     //  G#     → (T,T,T,F,T)  — all except ring
 
-    private func classifyChord(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> MusicalChord {
+    private nonisolated func classifyChord(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> MusicalChord {
         guard
             let thumbTip  = joints[.thumbTip],
             let indexTip  = joints[.indexTip],
@@ -304,7 +323,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         }
     }
 
-    private func dist(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
+    private nonisolated func dist(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
         hypot(a.x - b.x, a.y - b.y)
     }
 }

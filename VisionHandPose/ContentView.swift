@@ -3,6 +3,7 @@ import Vision
 
 struct ContentView: View {
     @StateObject private var manager = HandPoseManager()
+    @StateObject private var chordPlayer = ChordPlayer()
 
     private let bgGradient = LinearGradient(
         colors: [Color(red: 0.05, green: 0.05, blue: 0.1), Color(red: 0.1, green: 0.1, blue: 0.2)],
@@ -29,6 +30,10 @@ struct ContentView: View {
         }
         .onAppear { manager.checkPermissionAndStart() }
         .onDisappear { manager.stopSession() }
+        .onChange(of: manager.detectedHands.first?.chord) { _, chord in
+            guard let chord, chord != .none else { return }
+            chordPlayer.playChord(chord.notes)
+        }
     }
 
     // MARK: - Header
