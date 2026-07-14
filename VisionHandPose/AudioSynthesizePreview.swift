@@ -111,6 +111,8 @@ struct AudioSynthesizePreview: View {
     }
 }
 
-#Preview {
-    AudioSynthesizePreview()
+struct AudioSynthesizePreview_Previews: PreviewProvider {
+    static var previews: some View {
+        AudioSynthesizePreview()
+    }
 }

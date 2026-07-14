@@ -65,7 +65,7 @@ struct PlayView: View {
             .toolbar {
                 // Left Toolbar: Handedness
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(action: { manager.isRightHanded.toggle() }) {
+                    Button(action: { manager.toggleHandedness() }) {
                         HStack(spacing: 4) {
                             Image(systemName: "hand.raised.fill")
                             Text(manager.isRightHanded ? "Right-Handed" : "Left-Handed")
@@ -160,7 +160,7 @@ struct PlayView: View {
             GeometryReader { geo in
                 let w = geo.size.width
                 let h = geo.size.height
-                
+
                 // Central Laser partition
                 Path { path in
                     path.move(to: CGPoint(x: w * 0.5, y: 0))
@@ -296,6 +296,20 @@ struct PlayView: View {
             
             // Bottom Status Message
             VStack {
+                if let warning = manager.handDistanceWarning {
+                    HStack(spacing: 8) {
+                        Image(systemName: "viewfinder.circle.fill")
+                        Text(warning)
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.orange)
+                    .clipShape(Capsule())
+                    .padding(.top, 46)
+                }
+
                 Spacer()
                 HStack {
                     Circle()
@@ -505,9 +519,10 @@ struct PlayView: View {
             }
             
             VStack(alignment: .leading, spacing: 8) {
-                TutorialRow(step: "1", text: "Place both hands in camera view.")
-                TutorialRow(step: "2", text: "Hold up hand shapes in Purple zone to set chord.")
-                TutorialRow(step: "3", text: "Sweep index finger vertically in Green zone to strum strings.")
+                TutorialRow(step: "1", text: "Normal mode: use the left hand for C, D, E, F, G, or B.")
+                TutorialRow(step: "2", text: "Use the right hand for Maj, Min7, Min, or Maj7. Left-handed mode swaps both hands.")
+                TutorialRow(step: "3", text: "Before changing the base chord, make a fist briefly to reset detection.")
+                TutorialRow(step: "4", text: "Sweep the right index finger vertically across the strings to strum.")
             }
         }
         .padding(16)
