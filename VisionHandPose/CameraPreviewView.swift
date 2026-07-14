@@ -2,7 +2,7 @@ import SwiftUI
 import AVFoundation
 import UIKit
 
-/// A SwiftUI view that wraps AVCaptureVideoPreviewLayer to show the live camera feed
+/// A SwiftUI view that wraps AVCaptureVideoPreviewLayer and manages orientation natively
 struct CameraPreviewView: UIViewRepresentable {
     let session: AVCaptureSession
     
@@ -14,11 +14,38 @@ struct CameraPreviewView: UIViewRepresentable {
         var previewLayer: AVCaptureVideoPreviewLayer {
             return layer as! AVCaptureVideoPreviewLayer
         }
-
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            CameraPreviewView.configureVideoConnection(previewLayer.connection)
+    }
+    
+    class Coordinator: NSObject {
+        var rotationObservation: NSKeyValueObservation?
+        var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
+        
+        func setupRotationCoordinator(for previewLayer: AVCaptureVideoPreviewLayer) {
+            guard let session = previewLayer.session,
+                  let input = session.inputs.first(where: { $0 is AVCaptureDeviceInput }) as? AVCaptureDeviceInput else {
+                return
+            }
+            
+            let device = input.device
+            
+            // Create RotationCoordinator linked to this device and preview layer
+            let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: previewLayer)
+            self.rotationCoordinator = coordinator
+            
+            // KVO observe the preview rotation angle which automatically handles long/short edge camera offsets on all iPads
+            rotationObservation = coordinator.observe(\.videoRotationAngleForHorizonLevelPreview, options: [.initial, .new]) { [weak previewLayer] coord, change in
+                guard let previewLayer = previewLayer, let connection = previewLayer.connection else { return }
+                if let angle = change.newValue {
+                    if connection.isVideoRotationAngleSupported(angle) {
+                        connection.videoRotationAngle = angle
+                    }
+                }
+            }
         }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
     }
     
     func makeUIView(context: Context) -> VideoPreviewView {
@@ -27,38 +54,15 @@ struct CameraPreviewView: UIViewRepresentable {
         view.previewLayer.session = session
         view.previewLayer.videoGravity = .resizeAspectFill
         
+        // Wait for connection to be active before binding coordinator
         DispatchQueue.main.async {
-            CameraPreviewView.configureVideoConnection(view.previewLayer.connection)
+            context.coordinator.setupRotationCoordinator(for: view.previewLayer)
         }
         
         return view
     }
     
     func updateUIView(_ uiView: VideoPreviewView, context: Context) {
-        Self.configureVideoConnection(uiView.previewLayer.connection)
-    }
-
-    private static func configureVideoConnection(_ connection: AVCaptureConnection?) {
-        guard let connection else { return }
-
-        let angle = videoRotationAngleForCurrentInterface()
-        if connection.isVideoRotationAngleSupported(angle) {
-            connection.videoRotationAngle = angle
-        }
-    }
-
-    private static func videoRotationAngleForCurrentInterface() -> CGFloat {
-        let orientation = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?
-            .interfaceOrientation
-
-        switch orientation {
-        case .portrait: return 0
-        case .portraitUpsideDown: return 180
-        case .landscapeLeft: return 270
-        case .landscapeRight: return 90
-        default: return 0
-        }
+        // Automatically handled by the KVO RotationCoordinator
     }
 }

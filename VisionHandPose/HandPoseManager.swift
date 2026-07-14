@@ -210,6 +210,9 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     private var lastTriggerTimes: [Int: Date] = [:]
     private let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
     private let debounceInterval: TimeInterval = 0.10 // 100ms debounce per string for fast play
+    
+    private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
+    private var rotationObservation: NSKeyValueObservation?
 
     override init() {
         super.init()
@@ -277,8 +280,25 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                 videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "com.visionhandpose.videoQueue"))
                 videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
 
-                if let conn = videoOutput.connection(with: .video) {
-                    self.configureVideoConnection(conn)
+                if let connection = videoOutput.connection(with: .video) {
+                    let coordinator = AVCaptureDevice.RotationCoordinator(device: camera, previewLayer: nil)
+                    self.rotationCoordinator = coordinator
+                    
+                    self.rotationObservation = coordinator.observe(\.videoRotationAngleForHorizonLevelCapture, options: [.initial, .new]) { [weak self] coord, change in
+                        guard let self = self else { return }
+                        self.sessionQueue.async {
+                            if let connection = self.videoOutput.connection(with: .video),
+                               let angle = change.newValue {
+                                if connection.isVideoRotationAngleSupported(angle) {
+                                    connection.videoRotationAngle = angle
+                                }
+                            }
+                        }
+                    }
+                    
+                    if connection.isVideoMirroringSupported {
+                        connection.isVideoMirrored = (self.activeCameraPosition == .front)
+                    }
                 }
 
                 session.commitConfiguration()
@@ -311,7 +331,13 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     }
 
     private func configureVideoConnection(_ connection: AVCaptureConnection) {
-        let angle = Self.currentVideoRotationAngle()
+        let angle: CGFloat
+        if let coordinator = self.rotationCoordinator {
+            angle = coordinator.videoRotationAngleForHorizonLevelCapture
+        } else {
+            angle = Self.fallbackVideoRotationAngle()
+        }
+        
         if connection.isVideoRotationAngleSupported(angle) {
             connection.videoRotationAngle = angle
         }
@@ -320,29 +346,18 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             connection.isVideoMirrored = (activeCameraPosition == .front)
         }
     }
-
-    private static func currentVideoRotationAngle() -> CGFloat {
-        if Thread.isMainThread {
-            return videoRotationAngleForCurrentInterface()
-        }
-
-        return DispatchQueue.main.sync {
-            videoRotationAngleForCurrentInterface()
-        }
-    }
-
-    private static func videoRotationAngleForCurrentInterface() -> CGFloat {
+    
+    private static func fallbackVideoRotationAngle() -> CGFloat {
         let orientation = UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .first?
-            .interfaceOrientation
-
+            .interfaceOrientation ?? .portrait
         switch orientation {
-        case .portrait: return 0
-        case .portraitUpsideDown: return 180
-        case .landscapeLeft: return 270
-        case .landscapeRight: return 90
-        default: return 0
+        case .portrait: return 90
+        case .portraitUpsideDown: return 270
+        case .landscapeLeft: return 180
+        case .landscapeRight: return 0
+        default: return 90
         }
     }
 
@@ -489,10 +504,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             }
         }
 
-        var isLeftHand = false
-        if let thumbMP = joints[.thumbMP], let littleMCP = joints[.littleMCP] {
-            isLeftHand = thumbMP.location.x < littleMCP.location.x
-        }
+        let isLeftHand = observation.chirality == .left
 
         let readiness = evaluateReadiness(joints: joints)
 
@@ -577,3 +589,4 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         hypot(a.x - b.x, a.y - b.y)
     }
 }
+
