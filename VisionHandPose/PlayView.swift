@@ -107,7 +107,8 @@ struct PlayView: View {
     
     private func triggerStrumAction(for stringIndex: Int) {
         let chord = manager.activeChord
-        guard stringIndex >= 0 && stringIndex < 6 else { return }
+        guard manager.activeStrumType != .none,
+              stringIndex >= 0 && stringIndex < 6 else { return }
         
         let noteName = chord.guitarStrings[stringIndex]
         if !noteName.isEmpty {
@@ -392,10 +393,27 @@ struct PlayView: View {
                     }
 
                     // Strum chord type indicator
-                    if manager.strumHand != nil {
-                        Text(manager.activeStrumType.rawValue)
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundColor(.green)
+                    if manager.strumHand != nil || manager.isStrumTypeLocked {
+                        HStack(spacing: 7) {
+                            Text(manager.activeStrumType.rawValue)
+                                .font(.system(size: 14, weight: .bold, design: .rounded))
+
+                            if manager.isStrumTypeLocked {
+                                Label("LOCKED", systemImage: "lock.fill")
+                                    .font(.system(size: 9, weight: .black, design: .rounded))
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 4)
+                                    .background(Color.green.opacity(0.18))
+                                    .clipShape(Capsule())
+                                    .transition(.scale.combined(with: .opacity))
+                            } else {
+                                Text("SHOW POSE")
+                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .foregroundColor(.yellow)
+                            }
+                        }
+                        .foregroundColor(manager.isStrumTypeLocked ? .green : .white.opacity(0.5))
+                        .animation(.easeOut(duration: 0.15), value: manager.isStrumTypeLocked)
                     }
                 }
 
@@ -428,11 +446,13 @@ struct PlayView: View {
                         .foregroundColor(.white.opacity(0.5))
 
                     // Strum type finger pattern
-                    if manager.strumHand != nil {
+                    if manager.strumHand != nil || manager.isStrumTypeLocked {
                         HStack {
-                            Image(systemName: "hand.point.up.fill")
+                            Image(systemName: manager.isStrumTypeLocked ? "hand.pinch.fill" : "hand.point.up.fill")
                                 .foregroundColor(.green)
-                            Text(manager.activeStrumType.fingerPattern)
+                            Text(manager.isStrumTypeLocked
+                                 ? "Type locked — pinch and move across the strings"
+                                 : manager.activeStrumType.fingerPattern)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.7))
                         }
@@ -521,8 +541,8 @@ struct PlayView: View {
             VStack(alignment: .leading, spacing: 8) {
                 TutorialRow(step: "1", text: "Normal mode: use the left hand for C, D, E, F, G, or B.")
                 TutorialRow(step: "2", text: "Use the right hand for Maj, Min7, Min, or Maj7. Left-handed mode swaps both hands.")
-                TutorialRow(step: "3", text: "Before changing the base chord, make a fist briefly to reset detection.")
-                TutorialRow(step: "4", text: "Sweep the right index finger vertically across the strings to strum.")
+                TutorialRow(step: "3", text: "Show Maj, Min7, Min, or Maj7 to lock it. Show another type pose anytime to replace it.")
+                TutorialRow(step: "4", text: "Pinch thumb and index like a pick, then move across each string to pluck it.")
             }
         }
         .padding(16)

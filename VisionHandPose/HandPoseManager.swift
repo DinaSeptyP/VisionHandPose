@@ -230,6 +230,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     @Published var strumHand: HandPose? = nil
     @Published private(set) var handDistanceWarning: String? = nil
     @Published private(set) var needsNeutralPose = false
+    @Published private(set) var isStrumTypeLocked = false
 
     // Pose changes must remain consistent for several camera frames before
     // they replace the active result. This prevents one noisy frame from
@@ -253,10 +254,18 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     nonisolated(unsafe) private var handPoseRequest = VNDetectHumanHandPoseRequest()
 
     // Strum crossing detection variables (accessed only on serial video queue)
-    private var lastStrumY: CGFloat? = nil
-    private var lastTriggerTimes: [Int: Date] = [:]
+    // AVCapture invokes these only on its serial video queue.
+    nonisolated(unsafe) private var lastPickPoint: CGPoint? = nil
+    nonisolated(unsafe) private var isPinching = false
+    nonisolated(unsafe) private var lastTriggerTimes: [Int: Date] = [:]
+    nonisolated(unsafe) private var lastStrumPinchRatio: CGFloat? = nil
     private let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
-    private let debounceInterval: TimeInterval = 0.10 // 100ms debounce per string for fast play
+    private let debounceInterval: TimeInterval = 0.07 // responsive repeated picking without double-trigger noise
+    // A natural "pick" pinch often leaves a small visible gap on camera.
+    // These wider hysteresis limits recognize it before its transitional
+    // thumb/index shape can be mistaken for Maj7.
+    private let pinchStartRatio: CGFloat = 0.62
+    private let pinchReleaseRatio: CGFloat = 0.82
     nonisolated(unsafe) private var rightHandedForCapture = true
     nonisolated(unsafe) private var isCaptureMirrored = true
     
@@ -463,9 +472,27 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         return nil
     }
 
-    private func stabilizedStrumType(for candidate: StrumChordType) -> StrumChordType {
+    private func stabilizedStrumType(
+        for candidate: StrumChordType,
+        handVisible: Bool
+    ) -> StrumChordType {
+        guard handVisible else {
+            // Losing the hand briefly must not discard the selected type.
+            // It changes only when another valid strum pose is shown.
+            return stableStrumType
+        }
+
         if candidate == stableStrumType {
             pendingStrumType = candidate
+            pendingStrumTypeFrameCount = 0
+            return stableStrumType
+        }
+
+        // Keep the last valid type while pinching/moving, but cancel a pending
+        // replacement. A new type must be continuously visible; transitional
+        // Min7 -> pinch frames must not accumulate into a false Maj7 lock.
+        guard candidate != .none else {
+            pendingStrumType = .none
             pendingStrumTypeFrameCount = 0
             return stableStrumType
         }
@@ -477,10 +504,14 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             pendingStrumTypeFrameCount += 1
         }
 
-        let requiredFrames = candidate == .none ? 8 : 2
+        // Initial selection stays nearly instant. Replacing an existing type
+        // needs a few consecutive frames so finger-folding transitions are
+        // ignored while keeping the interaction responsive.
+        let requiredFrames = stableStrumType == .none ? 2 : 3
         if pendingStrumTypeFrameCount >= requiredFrames {
             stableStrumType = candidate
             pendingStrumTypeFrameCount = 0
+            isStrumTypeLocked = true
         }
         return stableStrumType
     }
@@ -573,39 +604,89 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
             // Classify strum chord type
             var detectedStrumType: StrumChordType? = nil
+            var strumPoseIsSettled = false
             if let strumHand = sHand {
                 detectedStrumType = classifyStrumType(joints: strumHand.joints)
             }
             
-            // Process Strum Hand & check Y-crossings against strings
-            if let strumHand = sHand, let indexTip = strumHand.joints[.indexTip] {
-                let currentY = indexTip.location.y
-                
-                if let lastY = lastStrumY {
-                    for i in 0..<stringYPositions.count {
-                        let stringY = stringYPositions[i]
-                        
-                        // Crossed if lastY and currentY are on opposite sides of stringY
-                        let crossed = (lastY - stringY) * (currentY - stringY) <= 0 && lastY != currentY
-                        
-                        if crossed {
-                            let now = Date()
-                            let lastTime = lastTriggerTimes[i] ?? Date.distantPast
-                            if now.timeIntervalSince(lastTime) >= debounceInterval {
-                                lastTriggerTimes[i] = now
-                                
-                                // Send crossing event to main thread
-                                let index = i
-                                Task { @MainActor in
-                                    self.stringPluckedSubject.send(index)
+            // Treat thumb + index as a guitar pick. Distances are normalized
+            // against palm width so the gesture works at different distances.
+            // Separate close/release thresholds prevent camera noise from
+            // rapidly toggling the pinch state.
+            if let strumHand = sHand,
+               strumHand.readiness.canReadChord,
+               let thumbTip = strumHand.joints[.thumbTip],
+               let indexTip = strumHand.joints[.indexTip],
+               let indexMCP = strumHand.joints[.indexMCP],
+               let littleMCP = strumHand.joints[.littleMCP] {
+                let palmWidth = dist(indexMCP.location, littleMCP.location)
+                let pinchDistance = dist(thumbTip.location, indexTip.location)
+                let ratio = palmWidth > 0.0001 ? pinchDistance / palmWidth : .greatestFiniteMagnitude
+
+                // A deliberate type pose settles before it is selected. While
+                // moving from Min toward a pinch, this ratio drops quickly and
+                // the temporary thumb+index silhouette must not count as Maj7.
+                if let previousRatio = lastStrumPinchRatio {
+                    strumPoseIsSettled = abs(ratio - previousRatio) < 0.08
+                }
+                lastStrumPinchRatio = ratio
+
+                if isPinching {
+                    if ratio > pinchReleaseRatio {
+                        isPinching = false
+                        lastPickPoint = nil
+                    }
+                } else if ratio < pinchStartRatio {
+                    isPinching = true
+                    // Start tracking here; forming a pinch must not pluck a
+                    // string before the pick itself moves across that string.
+                    lastPickPoint = CGPoint(
+                        x: (thumbTip.location.x + indexTip.location.x) / 2,
+                        y: (thumbTip.location.y + indexTip.location.y) / 2
+                    )
+                }
+
+                if isPinching {
+                    let currentPickPoint = CGPoint(
+                        x: (thumbTip.location.x + indexTip.location.x) / 2,
+                        y: (thumbTip.location.y + indexTip.location.y) / 2
+                    )
+
+                    if let previousPickPoint = lastPickPoint {
+                        for i in 0..<stringYPositions.count {
+                            let stringY = stringYPositions[i]
+
+                            let crossed = (previousPickPoint.y - stringY)
+                                * (currentPickPoint.y - stringY) <= 0
+                                && previousPickPoint.y != currentPickPoint.y
+
+                            if crossed {
+                                let now = Date()
+                                let lastTime = lastTriggerTimes[i] ?? Date.distantPast
+                                if now.timeIntervalSince(lastTime) >= debounceInterval {
+                                    lastTriggerTimes[i] = now
+
+                                    // Send crossing event to main thread
+                                    let index = i
+                                    Task { @MainActor in
+                                        self.stringPluckedSubject.send(index)
+                                    }
                                 }
                             }
                         }
                     }
+                    lastPickPoint = currentPickPoint
                 }
-                lastStrumY = currentY
             } else {
-                lastStrumY = nil
+                isPinching = false
+                lastPickPoint = nil
+                lastStrumPinchRatio = nil
+            }
+
+            // A pinch changes the apparent thumb/index pose. It is a playing
+            // gesture, not a request to replace the locked strum type.
+            if isPinching || !strumPoseIsSettled {
+                detectedStrumType = nil
             }
             
             // Reconstruct final HandPose states with correct attributes
@@ -650,7 +731,10 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                     isNeutralFist: neutralFistCandidate,
                     handVisible: chordHandForUI != nil
                 )
-                let displayedStrumType = self.stabilizedStrumType(for: strumTypeCandidate)
+                let displayedStrumType = self.stabilizedStrumType(
+                    for: strumTypeCandidate,
+                    handVisible: strumHandForUI != nil
+                )
 
                 self.chordHand = chordHandForUI
                 self.strumHand = strumHandForUI
@@ -963,13 +1047,21 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         )
         let L = isFingerExtended(
             mcp: littleMCP, pip: littlePIP, dip: littleDIP, tip: littleTip,
-            pipThreshold: 0.22, dipThreshold: -0.18, travelMultiplier: 1.03
+            // The little finger is shorter and often appears slightly bent
+            // from the camera angle even when intentionally raised for Min.
+            pipThreshold: 0.12, dipThreshold: -0.28, travelMultiplier: 0.98
         )
+
+        // For Min, the little finger is the meaningful signal. A relaxed
+        // thumb can look extended from the side, so do not let thumb noise
+        // reject Min as long as index, middle, and ring remain folded.
+        if L && !I && !M && !R {
+            return .minor
+        }
 
         switch (T, I, M, R, L) {
         case (false, true,  false, false, false): return .major
         case (true,  true,  false, false, true):  return .minor7
-        case (false, false, false, false, true):  return .minor
         case (true,  true,  false, false, false): return .major7
         default: return .none
         }
