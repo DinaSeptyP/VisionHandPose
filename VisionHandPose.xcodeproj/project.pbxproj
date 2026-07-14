@@ -10,9 +10,22 @@
 		363314D12FFCE187004B33BB /* VisionHandPose.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisionHandPose.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		258E00693006131700BBFFD6 /* Exceptions for "VisionHandPose" folder in "VisionHandPose" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 363314D02FFCE187004B33BB /* VisionHandPose */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		363314D32FFCE187004B33BB /* VisionHandPose */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				258E00693006131700BBFFD6 /* Exceptions for "VisionHandPose" folder in "VisionHandPose" target */,
+			);
 			path = VisionHandPose;
 			sourceTree = "<group>";
 		};
@@ -253,9 +266,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = BK8NMHYG7J;
+				DEVELOPMENT_TEAM = 79796NA26H;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VisionHandPose/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to detect and track hand poses.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -288,9 +302,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = BK8NMHYG7J;
+				DEVELOPMENT_TEAM = 79796NA26H;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VisionHandPose/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to detect and track hand poses.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

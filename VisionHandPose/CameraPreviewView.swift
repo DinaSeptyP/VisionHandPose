@@ -1,6 +1,5 @@
 import SwiftUI
 import AVFoundation
-import UIKit
 
 /// A SwiftUI view that wraps AVCaptureVideoPreviewLayer and manages orientation natively
 struct CameraPreviewView: UIViewRepresentable {
