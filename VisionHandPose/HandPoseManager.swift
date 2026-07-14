@@ -3,7 +3,6 @@ import AVFoundation
 import Vision
 import Combine
 import SwiftUI
-import UIKit
 
 // MARK: - Models
 
@@ -611,14 +610,24 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             let middleTip = joints[.middleTip],
             let ringTip   = joints[.ringTip],
             let littleTip = joints[.littleTip],
-            let wrist     = joints[.wrist]
+            let thumbCMC  = joints[.thumbCMC],
+            let thumbMP   = joints[.thumbMP],
+            let indexMCP  = joints[.indexMCP],
+            let indexPIP  = joints[.indexPIP],
+            let middleMCP = joints[.middleMCP],
+            let middlePIP = joints[.middlePIP],
+            let ringMCP   = joints[.ringMCP],
+            let ringPIP   = joints[.ringPIP],
+            let littleMCP = joints[.littleMCP],
+            let littlePIP = joints[.littlePIP]
         else { return .none }
 
-        let T = dist(thumbTip.location,  wrist.location)  > 0.15
-        let I = dist(indexTip.location,  wrist.location)  > 0.15
-        let M = dist(middleTip.location, wrist.location)  > 0.15
-        let R = dist(ringTip.location,   wrist.location)  > 0.15
-        let L = dist(littleTip.location, wrist.location)  > 0.15
+        // Joint angle similarity (cosTheta) is 100% invariant to hand scale and finger lengths
+        let T = isFingerExtended(mcp: thumbCMC, pip: thumbMP, tip: thumbTip)
+        let I = isFingerExtended(mcp: indexMCP, pip: indexPIP, tip: indexTip)
+        let M = isFingerExtended(mcp: middleMCP, pip: middlePIP, tip: middleTip)
+        let R = isFingerExtended(mcp: ringMCP, pip: ringPIP, tip: ringTip)
+        let L = isFingerExtended(mcp: littleMCP, pip: littlePIP, tip: littleTip)
 
         // Map finger pattern to base note (C=0 through B=6)
         let baseNote: MusicalChord
@@ -677,12 +686,17 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             let thumbTip  = joints[.thumbTip],
             let indexTip  = joints[.indexTip],
             let littleTip = joints[.littleTip],
-            let wrist     = joints[.wrist]
+            let thumbCMC  = joints[.thumbCMC],
+            let thumbMP   = joints[.thumbMP],
+            let indexMCP  = joints[.indexMCP],
+            let indexPIP  = joints[.indexPIP],
+            let littleMCP = joints[.littleMCP],
+            let littlePIP = joints[.littlePIP]
         else { return .major }
 
-        let T = dist(thumbTip.location,  wrist.location) > 0.15
-        let I = dist(indexTip.location,  wrist.location) > 0.15
-        let L = dist(littleTip.location, wrist.location) > 0.15
+        let T = isFingerExtended(mcp: thumbCMC, pip: thumbMP, tip: thumbTip)
+        let I = isFingerExtended(mcp: indexMCP, pip: indexPIP, tip: indexTip)
+        let L = isFingerExtended(mcp: littleMCP, pip: littlePIP, tip: littleTip)
 
         switch (T, I, L) {
         case (true,  true,  false): return .major7   // Thumb + Index (loose)
@@ -695,6 +709,21 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
     private nonisolated func dist(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
         hypot(a.x - b.x, a.y - b.y)
+    }
+
+    private nonisolated func isFingerExtended(mcp: HandJointPoint, pip: HandJointPoint, tip: HandJointPoint) -> Bool {
+        let v1 = CGPoint(x: pip.location.x - mcp.location.x, y: pip.location.y - mcp.location.y)
+        let v2 = CGPoint(x: tip.location.x - pip.location.x, y: tip.location.y - pip.location.y)
+        
+        let dotProduct = v1.x * v2.x + v1.y * v2.y
+        let magnitude1 = hypot(v1.x, v1.y)
+        let magnitude2 = hypot(v2.x, v2.y)
+        
+        guard magnitude1 > 0.0001, magnitude2 > 0.0001 else { return false }
+        let cosTheta = dotProduct / (magnitude1 * magnitude2)
+        
+        // cosTheta > 0.65 means angle between finger segments is < 49 degrees (straight/extended)
+        return cosTheta > 0.65
     }
 }
 
