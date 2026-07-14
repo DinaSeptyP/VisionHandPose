@@ -46,73 +46,57 @@ enum HandReadiness {
 }
 
 enum MusicalChord: String {
-    case none   = "—"
-    case a      = "A"
-    case aSharp = "A#"
-    case b      = "B"
-    case c      = "C"
-    case cSharp = "C#"
-    case d      = "D"
-    case dSharp = "D#"
-    case e      = "E"
-    case f      = "F"
-    case fSharp = "F#"
-    case g      = "G"
-    case gSharp = "G#"
+    case none = "—"
+    case c = "C"
+    case d = "D"
+    case e = "E"
+    case f = "F"
+    case g = "G"
+    case a = "A"
+    case b = "B"
+
+    var accidentalSuffix: String {
+        ""
+    }
 
     var icon: String {
         switch self {
-        case .none:   return "hand.raised.slash"
-        case .a:      return "hand.fist.fill"
-        case .aSharp: return "hand.wave.fill"
-        case .b:      return "hands.sparkles.fill"
-        case .c:      return "hand.point.up.left.fill"
-        case .cSharp: return "hand.point.up.fill"
-        case .d:      return "hand.victory.fill"
-        case .dSharp: return "hand.raised.fingers.spread.fill"
-        case .e:      return "hand.raised.fill"
-        case .f:      return "hand.raised.fill"
-        case .fSharp: return "hand.thumbsup.fill"
-        case .g:      return "hand.raised.fill"
-        case .gSharp: return "hand.raised.fill"
+        case .none: return "hand.raised.slash"
+        case .c:    return "hand.point.up.left.fill"
+        case .d:    return "hand.victory.fill"
+        case .e:    return "hand.raised.fill"
+        case .f:    return "hand.raised.fill"
+        case .g:    return "hand.raised.fill"
+        case .a:    return "hand.fist.fill"
+        case .b:    return "hands.sparkles.fill"
         }
     }
 
     // Finger pattern used to trigger this chord
     var fingerPattern: String {
         switch self {
-        case .none:   return "No chord detected"
-        case .a:      return "Thumb only — thumbs up"
-        case .aSharp: return "Thumb + little finger — hang loose"
-        case .b:      return "Thumb + index — L-shape"
-        case .c:      return "Index finger only"
-        case .cSharp: return "Index + little finger — devil horns"
-        case .d:      return "Index + middle — peace sign"
-        case .dSharp: return "Index + middle + ring"
-        case .e:      return "Index + middle + ring + little"
-        case .f:      return "Index + middle + ring + little — all except thumb"
-        case .fSharp: return "Thumb + index + middle"
-        case .g:      return "All five fingers — open hand"
-        case .gSharp: return "Thumb + index + middle + little — all except ring"
+        case .none: return "No chord detected"
+        case .c:    return "Index finger only"
+        case .d:    return "Index + middle — peace sign"
+        case .e:    return "Index + middle + ring + little"
+        case .f:    return "Index + middle + ring + little — all except thumb"
+        case .g:    return "All five fingers — open hand"
+        case .a:    return "Thumb only — thumbs up"
+        case .b:    return "Thumb + index — L-shape"
         }
     }
 
     // Notes (as ChordPlayer note names) that make up the chord for this pose
     var notes: [String] {
         switch self {
-        case .none:   return []
-        case .a:      return ["A", "C#", "E"]
-        case .aSharp: return ["A#", "D", "F"]
-        case .b:      return ["B", "D", "F#"]
-        case .c:      return ["C", "E", "G"]
-        case .cSharp: return ["C#", "E", "G#"]
-        case .d:      return ["D", "F#", "A"]
-        case .dSharp: return ["D#", "G", "A#"]
-        case .e:      return ["E", "G", "B"]
-        case .f:      return ["F", "A", "C2"]
-        case .fSharp: return ["F#", "A", "C#"]
-        case .g:      return ["G", "B", "D"]
-        case .gSharp: return ["G#", "C", "D#"]
+        case .none: return []
+        case .c:    return ["C", "E", "G"]
+        case .d:    return ["D", "F#", "A"]
+        case .e:    return ["E", "G", "B"]
+        case .f:    return ["F", "A", "C2"]
+        case .g:    return ["G", "B", "D"]
+        case .a:    return ["A", "C#", "E"]
+        case .b:    return ["B", "D", "F#"]
         }
     }
 
@@ -121,30 +105,71 @@ enum MusicalChord: String {
         switch self {
         case .none:
             return ["", "", "", "", "", ""]
-        case .a:
-            return ["E3", "A3", "E", "A", "C#5", "E5"]
-        case .aSharp:
-            return ["F3", "A#3", "F", "A#", "D5", "F5"]
-        case .b:
-            return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
         case .c:
             return ["E3", "C", "E", "G", "C5", "E5"]
-        case .cSharp:
-            return ["F3", "C#", "F", "G#", "C#5", "F5"]
         case .d:
             return ["D3", "A3", "D", "F#", "A", "D5"]
-        case .dSharp:
-            return ["D#3", "A#3", "D#", "G", "A#", "D#5"]
-        case .e: // E Minor voicing
+        case .e:
             return ["E3", "B3", "E", "G", "B", "E5"]
         case .f:
             return ["F3", "C", "F", "A", "C5", "F5"]
-        case .fSharp:
-            return ["F#3", "C#", "F#", "A#", "C#5", "F#5"]
         case .g:
             return ["G3", "B3", "D", "G", "B", "G5"]
-        case .gSharp:
-            return ["G#3", "C", "D#", "G#", "C5", "G#5"]
+        case .a:
+            return ["E3", "A3", "E", "A", "C#5", "E5"]
+        case .b:
+            return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
+        }
+    }
+}
+
+// Accidental type based on vertical position
+enum Accidental {
+    case sharp   // Top of frame (y < 0.33)
+    case natural // Middle of frame (0.33 <= y <= 0.66)
+    case flat    // Bottom of frame (y > 0.66)
+
+    var suffix: String {
+        switch self {
+        case .sharp:   return "#"
+        case .natural: return ""
+        case .flat:    return "♭"
+        }
+    }
+
+    static func from(y: CGFloat) -> Accidental {
+        if y < 0.33 {
+            return .sharp
+        } else if y > 0.66 {
+            return .flat
+        } else {
+            return .natural
+        }
+    }
+}
+
+// Strum chord type based on hand pose
+enum StrumChordType: String {
+    case major7 = "Maj7"
+    case major = "Maj"
+    case minor7 = "Min7"
+    case minor = "Min"
+
+    var icon: String {
+        switch self {
+        case .major7:  return "hand.raised.fingers.spread.fill"
+        case .major:   return "hand.point.up.fill"
+        case .minor7:  return "rock"
+        case .minor:   return "hand.point.down.fill"
+        }
+    }
+
+    var fingerPattern: String {
+        switch self {
+        case .major7:  return "Thumb + Index — loose pose"
+        case .major:   return "Index pointing"
+        case .minor7:  return "Thumb + Index + Pinky — rock n roll"
+        case .minor:   return "Pinky extended"
         }
     }
 }
@@ -157,6 +182,9 @@ struct HandPose: Identifiable {
     let isLeftHand: Bool
     let readiness: HandReadiness
     let isStrumHand: Bool
+    let strumChordType: StrumChordType?
+
+    var fingerDistances: [String: CGFloat] = [:]
 
     var skeletonLines: [[CGPoint]] {
         var lines: [[CGPoint]] = []
@@ -193,6 +221,8 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
     // Guitar specific state
     @Published var activeChord: MusicalChord = .none
+    @Published var activeAccidental: Accidental = .natural
+    @Published var activeStrumType: StrumChordType = .major
     @Published var isRightHanded: Bool = true // Left side = Chord, Right side = Strum
     @Published var chordHand: HandPose? = nil
     @Published var strumHand: HandPose? = nil
@@ -393,10 +423,20 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             
             // Classify chord from Chord Hand
             var detectedChord: MusicalChord = .none
+            var chordFingerDistances: [String: CGFloat] = [:]
+            var chordHandCenterY: CGFloat? = nil
             if let chordHand = cHand {
                 if chordHand.readiness.canReadChord {
-                    detectedChord = classifyChord(joints: chordHand.joints)
+                    detectedChord = classifyChord(joints: chordHand.joints, handCenterY: chordHand.joints[.middleMCP]?.location.y)
+                    chordFingerDistances = calculateFingerDistances(joints: chordHand.joints)
+                    chordHandCenterY = chordHand.joints[.middleMCP]?.location.y
                 }
+            }
+
+            // Classify strum chord type
+            var detectedStrumType: StrumChordType? = nil
+            if let strumHand = sHand {
+                detectedStrumType = classifyStrumType(joints: strumHand.joints)
             }
             
             // Process Strum Hand & check Y-crossings against strings
@@ -431,25 +471,31 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             }
             
             // Reconstruct final HandPose states with correct attributes
-            let finalCHand = cHand.map {
-                HandPose(
-                    joints: $0.joints,
+            var finalCHand: HandPose? = nil
+            if let c = cHand {
+                finalCHand = HandPose(
+                    joints: c.joints,
                     chord: detectedChord,
-                    confidence: $0.confidence,
-                    isLeftHand: $0.isLeftHand,
-                    readiness: $0.readiness,
-                    isStrumHand: false
+                    confidence: c.confidence,
+                    isLeftHand: c.isLeftHand,
+                    readiness: c.readiness,
+                    isStrumHand: false,
+                    strumChordType: nil,
+                    fingerDistances: chordFingerDistances
                 )
             }
-            
-            let finalSHand = sHand.map {
-                HandPose(
-                    joints: $0.joints,
+
+            var finalSHand: HandPose? = nil
+            if let s = sHand {
+                finalSHand = HandPose(
+                    joints: s.joints,
                     chord: .none,
-                    confidence: $0.confidence,
-                    isLeftHand: $0.isLeftHand,
-                    readiness: $0.readiness,
-                    isStrumHand: true
+                    confidence: s.confidence,
+                    isLeftHand: s.isLeftHand,
+                    readiness: s.readiness,
+                    isStrumHand: true,
+                    strumChordType: detectedStrumType,
+                    fingerDistances: [:]
                 )
             }
             
@@ -457,21 +503,25 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                 self.chordHand = finalCHand
                 self.strumHand = finalSHand
                 self.activeChord = detectedChord
-                
+                self.activeStrumType = detectedStrumType ?? .major
+                if let centerY = chordHandCenterY {
+                    self.activeAccidental = Accidental.from(y: centerY)
+                }
+
                 var handsList: [HandPose] = []
                 if let c = finalCHand { handsList.append(c) }
                 if let s = finalSHand { handsList.append(s) }
                 self.detectedHands = handsList
-                
+
                 // Status Messaging
                 if finalCHand == nil && finalSHand == nil {
                     self.statusMessage = "No hands detected. Left side = Chord, Right side = Strum."
                 } else if finalCHand != nil && finalSHand == nil {
-                    self.statusMessage = "Chord hand active (\(detectedChord.rawValue)). Raise strum hand on right."
+                    self.statusMessage = "Chord hand active (\(detectedChord.rawValue)\(self.activeAccidental.suffix)). Raise strum hand on right."
                 } else if finalCHand == nil && finalSHand != nil {
                     self.statusMessage = "Strum hand active. Raise chord hand on left."
                 } else {
-                    self.statusMessage = "Guitar ready! Hold chord on left, strum strings on right."
+                    self.statusMessage = "Guitar ready! \(detectedChord.rawValue)\(self.activeAccidental.suffix) \(self.activeStrumType.rawValue)"
                 }
             }
             
@@ -514,7 +564,9 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             confidence: observation.confidence,
             isLeftHand: isLeftHand,
             readiness: readiness,
-            isStrumHand: false // Decided later
+            isStrumHand: false, // Decided later
+            strumChordType: nil,
+            fingerDistances: [:]
         )
     }
 
@@ -552,7 +604,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
     // MARK: - Chord Classification
 
-    private nonisolated func classifyChord(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> MusicalChord {
+    private nonisolated func classifyChord(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint], handCenterY: CGFloat?) -> MusicalChord {
         guard
             let thumbTip  = joints[.thumbTip],
             let indexTip  = joints[.indexTip],
@@ -568,20 +620,76 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         let R = dist(ringTip.location,   wrist.location)  > 0.15
         let L = dist(littleTip.location, wrist.location)  > 0.15
 
+        // Map finger pattern to base note (C=0 through B=6)
+        let baseNote: MusicalChord
         switch (T, I, M, R, L) {
-        case (true, false, false, false, false): return .a
-        case (true,  false, false, false, true):  return .aSharp
-        case (true, true,  false, false, false):  return .b
-        case (false, true,  false, false, false): return .c
-        case (false,  true,  false, false, true): return .cSharp
-        case (false, true,  true,  false, false): return .d
-        case (false, true,  true,  false,  true): return .dSharp
-        case (false, true,  true,  true,  false):  return .e
-        case (false,  true,  true,  true,  true):  return .f
-        case (true,  true,  true,  false,  false): return .fSharp
-        case (true,  true,  true,  true, true): return .g
-        case (true, true, true,  false,  true):  return .gSharp
+        case (false, true,  false, false, false): baseNote = .c  // Index only
+        case (false, true,  true,  false, false): baseNote = .d  // Index + Middle
+        case (false, true,  true,  true,  false): baseNote = .e  // Index + Middle + Ring
+        case (false, true,  true,  true,  true): baseNote = .f  // All except thumb
+        case (true,  true,  true,  true,  true): baseNote = .g  // All five
+        case (true,  false, false, false, false): baseNote = .a  // Thumb only
+        case (true,  true,  false, false, false): baseNote = .b  // Thumb + Index
         default: return .none
+        }
+
+        // Apply accidental based on hand center Y position (middle of palm)
+        let accidental = Accidental.from(y: handCenterY ?? 0.5)
+
+        // For sharp zone, shift note up (e.g., C becomes C# = D♭)
+        // For flat zone, shift note down conceptually, but we'll display as flat suffix
+        switch accidental {
+        case .sharp:
+            return baseNote
+        case .natural:
+            return baseNote
+        case .flat:
+            return baseNote
+        }
+    }
+
+    private nonisolated func calculateFingerDistances(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> [String: CGFloat] {
+        guard let wrist = joints[.wrist] else { return [:] }
+
+        var distances: [String: CGFloat] = [:]
+
+        if let thumbTip = joints[.thumbTip] {
+            distances["thumb"] = dist(thumbTip.location, wrist.location)
+        }
+        if let indexTip = joints[.indexTip] {
+            distances["index"] = dist(indexTip.location, wrist.location)
+        }
+        if let middleTip = joints[.middleTip] {
+            distances["middle"] = dist(middleTip.location, wrist.location)
+        }
+        if let ringTip = joints[.ringTip] {
+            distances["ring"] = dist(ringTip.location, wrist.location)
+        }
+        if let littleTip = joints[.littleTip] {
+            distances["little"] = dist(littleTip.location, wrist.location)
+        }
+
+        return distances
+    }
+
+    private nonisolated func classifyStrumType(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> StrumChordType {
+        guard
+            let thumbTip  = joints[.thumbTip],
+            let indexTip  = joints[.indexTip],
+            let littleTip = joints[.littleTip],
+            let wrist     = joints[.wrist]
+        else { return .major }
+
+        let T = dist(thumbTip.location,  wrist.location) > 0.15
+        let I = dist(indexTip.location,  wrist.location) > 0.15
+        let L = dist(littleTip.location, wrist.location) > 0.15
+
+        switch (T, I, L) {
+        case (true,  true,  false): return .major7   // Thumb + Index (loose)
+        case (false, true,  false): return .major    // Index pointing
+        case (true,  true,  true):  return .minor7   // Thumb + Index + Pinky (rock)
+        case (false, false, true):   return .minor    // Pinky only
+        default: return .major
         }
     }
 
