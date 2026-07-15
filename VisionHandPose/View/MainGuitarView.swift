@@ -156,14 +156,6 @@ struct MainGuitarView: View {
                         .foregroundStyle(Color("PrimaryBrown"))
                 }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    
-                } label: {
-                    Text("\(Image(systemName: "gearshape"))")
-                        .foregroundStyle(Color("PrimaryBrown"))
-                }
-            }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             updateOrientation()

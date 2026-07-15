@@ -9,12 +9,12 @@ import SwiftUI
 
 struct LandingView: View {
     let strings: [CGFloat] = [
-        0.3,
-        0.4,
-        0.5,
-        0.6,
-        0.7,
-        0.8
+        0.25,
+        0.35,
+        0.45,
+        0.55,
+        0.65,
+        0.75
     ]
     
     @State private var path = NavigationPath()
@@ -52,11 +52,7 @@ struct LandingView: View {
                 
                 RadialGradient(
                     colors: [
-                        Color(
-                            red: 200/255,
-                            green: 148/255,
-                            blue: 58/255
-                        ).opacity(0.18),
+                        Color("SecondaryFont").opacity(0.3),
                         .clear
                     ],
                     center: .center,
@@ -88,16 +84,16 @@ struct LandingView: View {
                         HStack {
                             Text("\(Image(systemName: "hand.tap"))")
                                 .foregroundStyle(Color("PrimaryFont"))
-                                .font(Font.custom("Inter", size: 30))
+                                .font(Font.custom("Inter", size: 25))
                                 .padding(.trailing, 30)
                             Text("Begin Playing")
-                                .font(.custom("Inter", size: 30))
+                                .font(.custom("Playfair Display", size: 25))
                                 .fontWeight(.medium)
                                 .foregroundStyle(Color("PrimaryFont"))
                             Spacer()
                             Text("\(Image(systemName: "chevron.right"))")
                                 .foregroundStyle(Color("PrimaryFont"))
-                                .font(Font.custom("Inter", size: 30))
+                                .font(Font.custom("Inter", size: 25))
                         }
                         .padding(.vertical, 30)
                         .padding(.horizontal, 100)
@@ -108,11 +104,13 @@ struct LandingView: View {
                 }
             }
             .onAppear {
+                guard !animate else { return }
                 animate = true
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     vibrate = true
                 }
+
             }
             .navigationDestination(for: String.self) { value in
                 if value == "MainGuitar" {

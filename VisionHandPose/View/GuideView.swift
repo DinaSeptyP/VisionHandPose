@@ -103,42 +103,37 @@ struct GuideView: View {
                     case .hand:
                         GuideCard(
                             number: 1,
-                            logo: "guitars",
+                            logo: "hand.raised",
                             title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
+                            subtitle: "Make sure both of your hands are in the right spots and visible on camera. Ensure your chord-shaping hand is clearly visible in the Chord Zone, and your strumming hand is in the Strumming Zone. Good lighting will significantly improve detection accuracy.",
+                            tip: "Natural light is best, but any light will do"
                         )
                     case .camera:
                         GuideCard(
                             number: 2,
                             logo: "camera",
                             title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
+                            subtitle: "To give you the best experience, StrumMe uses your device’s front camera to detect your hands and map them onto the virtual guitar. This is how the app checks your chords and strumming in real-time! Because of this, enabling camera permissions is a must. Don't worry, we only use the camera for gameplay, and your privacy is always protected.",
+                            tip: "No internet needed - 100% on-device"
                         )
                     case .chords:
-                        GuideCard(
-                            number: 3,
-                            logo: "music.pages",
-                            title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
-                        )
+                        ChordGuides()
+
                     case .strumming:
                         GuideCard(
                             number: 4,
-                            logo: "music.note.list",
+                            logo: "guitars",
                             title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
+                            subtitle: "Position and prepare your strumming hand over the designated strumming zone. Make sure your wrist is relaxed and ready to move, as the camera needs to track your hand's to register your strums on the strings.",
+                            tip: "Try strumming all 6 strings slowly"
                         )
                     case .settings:
                         GuideCard(
                             number: 5,
                             logo: "gearshape",
                             title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
+                            subtitle: "Left-handed? You can easily switch layout modes by tapping the button in the top-right corner of the camera screen. This will mirror the detection zones to comfortably match your playing style.",
+                            tip: "Only about 10% of the world is left-handed"
                         )
                     }
                 }

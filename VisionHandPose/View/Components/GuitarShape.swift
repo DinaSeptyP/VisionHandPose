@@ -22,9 +22,7 @@ struct GuitarString: Shape {
     }
 
     func path(in rect: CGRect) -> Path {
-
         var path = Path()
-
         let yy = rect.height * y + vibration
 
         path.move(to: CGPoint(x: 0, y: yy))

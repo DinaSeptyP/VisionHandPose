@@ -35,13 +35,16 @@ struct GuideCard: View {
                     .font(.custom("Playfair Display", size: 60))
                     .fontWeight(.black)
                     .foregroundStyle(Color("PrimaryBackground"))
+                    .multilineTextAlignment(.leading)
                     .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.bottom, 10)
                 Text(subtitle)
                     .font(.custom("Inter", size: 23))
                     .fontWeight(.regular)
                     .foregroundStyle(Color("PrimaryBackground"))
             }
+            .frame(maxWidth: 600, alignment: .leading)
             .padding(.bottom, 50)
             
             HStack {
@@ -62,6 +65,7 @@ struct GuideCard: View {
             )
         }
         .padding()
+        .padding(.top, -50)
     }
 }
 

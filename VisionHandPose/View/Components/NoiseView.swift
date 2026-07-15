@@ -16,7 +16,7 @@ struct NoiseView: View {
 
                 context.fill(
                     Path(CGRect(x: x, y: y, width: 1, height: 1)),
-                    with: .color(.white.opacity(0.05))
+                    with: .color(Color("SecondaryFont"))
                 )
             }
         }
