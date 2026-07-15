@@ -11,7 +11,6 @@ struct PracticeView: View {
     
     private let availableChords: [MusicalChord] = [
         .c, .d, .e, .f, .g, .a, .b,
-        .cSharp, .dSharp, .fSharp, .gSharp, .aSharp
     ]
     
     var body: some View {

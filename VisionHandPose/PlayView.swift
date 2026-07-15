@@ -182,21 +182,78 @@ struct PlayView: View {
                     x: w * 0.25,
                     y: 28
                 )
-                
+
                 ZoneLabel(
                     title: manager.isRightHanded ? "STRUM ZONE (STRINGS)" : "CHORD ZONE (FRET)",
                     color: manager.isRightHanded ? Color.green : Color.purple,
                     x: w * 0.75,
                     y: 28
                 )
+
+                // Accidental zone indicators (horizontal lines)
+                if manager.isRightHanded {
+                    // Sharp zone line (top third)
+                    Path { path in
+                        path.move(to: CGPoint(x: 0, y: h * 0.33))
+                        path.addLine(to: CGPoint(x: w * 0.48, y: h * 0.33))
+                    }
+                    .stroke(
+                        LinearGradient(
+                            colors: [.orange, .orange.opacity(0.6)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: 2, dash: [6, 4])
+                    )
+
+                    // Natural zone line (middle)
+                    Path { path in
+                        path.move(to: CGPoint(x: 0, y: h * 0.66))
+                        path.addLine(to: CGPoint(x: w * 0.48, y: h * 0.66))
+                    }
+                    .stroke(
+                        LinearGradient(
+                            colors: [.green, .green.opacity(0.6)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: 2, dash: [6, 4])
+                    )
+
+                    // Accidental labels
+                    Text("♯ SHARP")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Capsule())
+                        .position(x: w * 0.44, y: h * 0.33)
+
+                    Text("♭ FLAT")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Capsule())
+                        .position(x: w * 0.44, y: h * 0.66)
+                }
                 
                 // Skeletons
                 if let cHand = manager.chordHand {
                     drawHandSkeleton(cHand, width: w, height: h, color: .purple)
                 }
-                
+
                 if let sHand = manager.strumHand {
                     drawHandSkeleton(sHand, width: w, height: h, color: .green)
+                }
+
+                // Finger distance gauges in chord zone (left side)
+                if let cHand = manager.chordHand, manager.isRightHanded {
+                    FingerDistanceGauges(fingerDistances: cHand.fingerDistances)
+                        .frame(width: w * 0.48, height: h)
+                        .position(x: w * 0.24, y: h * 0.5)
                 }
                 
                 // 6 horizontal strings
@@ -283,14 +340,30 @@ struct PlayView: View {
                     Text("ACTIVE CHORD")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.white.opacity(0.5))
-                    
-                    Text(manager.activeChord.rawValue)
-                        .font(.system(size: 40, weight: .black, design: .rounded))
-                        .foregroundColor(manager.activeChord != .none ? .cyan : .white.opacity(0.3))
+
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(manager.activeChord.rawValue)
+                            .font(.system(size: 40, weight: .black, design: .rounded))
+                            .foregroundColor(manager.activeChord != .none ? .cyan : .white.opacity(0.3))
+
+                        if manager.activeChord != .none {
+                            Text(manager.activeAccidental.suffix)
+                                .font(.system(size: 24, weight: .bold, design: .rounded))
+                                .foregroundColor(manager.activeAccidental == .sharp ? .orange :
+                                                manager.activeAccidental == .flat ? .blue : .cyan)
+                        }
+                    }
+
+                    // Strum chord type indicator
+                    if manager.strumHand != nil {
+                        Text(manager.activeStrumType.rawValue)
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(.green)
+                    }
                 }
-                
+
                 Spacer()
-                
+
                 // Strum shortcut
                 Button(action: strumAll) {
                     Image(systemName: "music.note.list")
@@ -302,7 +375,7 @@ struct PlayView: View {
                 }
                 .disabled(manager.activeChord == .none)
             }
-            
+
             if manager.activeChord != .none {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
@@ -312,10 +385,21 @@ struct PlayView: View {
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.7))
                     }
-                    
+
                     Text("Voicing: " + manager.activeChord.guitarStrings.filter({ !$0.isEmpty }).joined(separator: " - "))
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.white.opacity(0.5))
+
+                    // Strum type finger pattern
+                    if manager.strumHand != nil {
+                        HStack {
+                            Image(systemName: "hand.point.up.fill")
+                                .foregroundColor(.green)
+                            Text(manager.activeStrumType.fingerPattern)
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 4)
@@ -469,6 +553,67 @@ private struct TutorialRow: View {
     }
 }
 
+private struct FingerDistanceGauges: View {
+    let fingerDistances: [String: CGFloat]
+    let threshold: CGFloat = 0.15
+
+    private let fingerOrder = ["thumb", "index", "middle", "ring", "little"]
+    private let fingerLabels = ["T", "I", "M", "R", "L"]
+
+    var body: some View {
+        GeometryReader { geo in
+            HStack(spacing: 8) {
+                ForEach(0..<5) { i in
+                    let finger = fingerOrder[i]
+                    let distance = fingerDistances[finger] ?? 0
+                    let isExtended = distance > threshold
+
+                    VStack(spacing: 4) {
+                        // Finger label
+                        Text(fingerLabels[i])
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.6))
+
+                        // Vertical gauge bar
+                        ZStack(alignment: .bottom) {
+                            // Background track
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.black.opacity(0.4))
+                                .frame(width: 16, height: 80)
+
+                            // Fill bar
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(isExtended ? Color.green : Color.red)
+                                .frame(width: 16, height: min(distance * 200, 80))
+                                .animation(.easeOut(duration: 0.1), value: distance)
+
+                            // Threshold line
+                            Rectangle()
+                                .fill(Color.white.opacity(0.5))
+                                .frame(width: 20, height: 2)
+                                .offset(y: -threshold * 200 + 80)
+
+                            // Distance value
+                            Text(String(format: "%.2f", distance))
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                                .foregroundColor(.white)
+                                .padding(.top, 2)
+                        }
+
+                        // Extended/curled status
+                        Text(isExtended ? "↑" : "↓")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(isExtended ? .green : .red)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 12)
+            .background(Color.black.opacity(0.3))
+            .cornerRadius(8)
+        }
+    }
 #Preview {
     PlayView(manager: HandPoseManager(), chordPlayer: ChordPlayer())
 }
