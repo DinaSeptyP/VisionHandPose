@@ -8,21 +8,21 @@
 import SwiftUI
 
 struct MainGuitarView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Binding var path: NavigationPath
     @ObservedObject var manager: HandPoseManager
     @ObservedObject var chordPlayer: ChordPlayer
     @State private var stringVibrations: [CGFloat] = [0, 0, 0, 0, 0, 0]
     @State private var lastTriggeredStrings: [Bool] = [false, false, false, false, false, false]
-    @State private var isLandscape = false
 
     var body: some View {
         Group {
             if manager.cameraPermissionGranted {
-                if isLandscape {
-                    ZStack {
+                ZStack {
                         Color.black.opacity(0.2)
                             .ignoresSafeArea()
                         CameraPreviewView(session: manager.session)
+                            .ignoresSafeArea()
 
                         GeometryReader { geo in
                             let w = geo.size.width
@@ -53,6 +53,34 @@ struct MainGuitarView: View {
                                 x: w*0.75,
                                 y:25
                             )
+
+                            let chordStartX = manager.isRightHanded ? CGFloat(0) : w * 0.52
+                            let chordEndX = manager.isRightHanded ? w * 0.48 : w
+                            let chordLabelX = manager.isRightHanded ? w * 0.06 : w * 0.94
+
+                            ForEach(
+                                [("SHARP", CGFloat(0.33)), ("NORMAL", CGFloat(0.50)), ("FLAT", CGFloat(0.66))],
+                                id: \.0
+                            ) { label, ratio in
+                                Path { path in
+                                    path.move(to: CGPoint(x: chordStartX, y: h * ratio))
+                                    path.addLine(to: CGPoint(x: chordEndX, y: h * ratio))
+                                }
+                                .stroke(
+                                    Color("PrimaryBrown").opacity(label == "NORMAL" ? 0.35 : 0.65),
+                                    style: StrokeStyle(lineWidth: 1, dash: [7, 5])
+                                )
+
+                                Text(label)
+                                    .font(.custom("Inter", size: 9))
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3)
+                                    .background(Color.black.opacity(0.58))
+                                    .clipShape(Capsule())
+                                    .position(x: chordLabelX, y: h * ratio - 11)
+                            }
 
                             if let cHand = manager.chordHand {
                                 drawHandSkeleton(cHand, width: w, height: h, color: .primaryBrown)
@@ -103,6 +131,29 @@ struct MainGuitarView: View {
                             }
                         }
                         VStack {
+                            if manager.handScalePercent != nil || manager.handDistanceWarning != nil {
+                                handReadabilityIndicator
+                                    .padding(.top, 54)
+                            }
+                            Spacer()
+                        }
+                        VStack {
+                            Spacer()
+                            HStack(alignment: .bottom, spacing: 20) {
+                                if manager.isRightHanded {
+                                    chordSummaryCard
+                                    Spacer(minLength: 24)
+                                    strumPatternCard
+                                } else {
+                                    strumPatternCard
+                                    Spacer(minLength: 24)
+                                    chordSummaryCard
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 58)
+                        }
+                        VStack {
                             Spacer()
                             HStack {
                                 Circle()
@@ -119,10 +170,8 @@ struct MainGuitarView: View {
                             .clipShape(Capsule())
                             .padding(.bottom, 12)
                         }
-                        .aspectRatio(isLandscape ? 16.0 / 9.0 : 9.0 / 16.0, contentMode: .fit)
-                        .cornerRadius(24)
                     }
-                }
+                    .ignoresSafeArea()
             } else {
                 PermissionRequestView(manager: manager)
             }
@@ -131,7 +180,7 @@ struct MainGuitarView: View {
         .onAppear {
             forceLandscape()
             updateOrientation()
-            manager.checkPermissionAndStart()
+            manager.startIfCameraAlreadyAuthorized()
         }
         .onDisappear {
             manager.stopSession()
@@ -175,6 +224,164 @@ struct MainGuitarView: View {
         .onReceive(manager.stringPluckedSubject) { stringIndex in
             triggerStrumAction(for: stringIndex)
         }
+    }
+
+    private var chordSummaryCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("CHORD DETECTED")
+                .font(.custom("Inter", size: 11))
+                .fontWeight(.bold)
+                .tracking(1.4)
+                .foregroundStyle(cardSecondaryForeground)
+
+            HStack(alignment: .firstTextBaseline, spacing: 7) {
+                Text(manager.activeChord.rawValue + manager.activeAccidental.suffix)
+                    .font(.custom("Playfair Display", size: 48))
+                    .fontWeight(.black)
+
+                Text(manager.activeStrumType == .none ? "—" : manager.activeStrumType.rawValue)
+                    .font(.custom("Playfair Display", size: 28))
+                    .fontWeight(.bold)
+            }
+            .foregroundStyle(cardForeground)
+
+            Label(accidentalTitle, systemImage: accidentalIcon)
+                .font(.custom("Inter", size: 11))
+                .fontWeight(.semibold)
+                .foregroundStyle(accidentalColor)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(accidentalColor.opacity(0.16))
+                .clipShape(Capsule())
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .frame(width: 300, height: 126, alignment: .leading)
+        .background(panelBackground.opacity(0.88))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color("PrimaryBrown").opacity(0.65), lineWidth: 1)
+        }
+    }
+
+    private var handReadabilityIndicator: some View {
+        HStack(spacing: 8) {
+            Image(systemName: handReadabilityIsIdeal ? "checkmark.circle.fill" : "viewfinder.circle")
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(handReadabilityTitle)
+                    .font(.custom("Inter", size: 11))
+                    .fontWeight(.bold)
+
+                Text("Readable 18–72% • ideal 25–60% of frame")
+                    .font(.custom("Inter", size: 9))
+                    .opacity(0.78)
+            }
+        }
+        .foregroundStyle(handReadabilityColor)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.black.opacity(0.68))
+        .clipShape(Capsule())
+        .overlay {
+            Capsule().stroke(handReadabilityColor.opacity(0.65), lineWidth: 1)
+        }
+    }
+
+    private var handReadabilityIsIdeal: Bool {
+        guard let scale = manager.handScalePercent else { return false }
+        return manager.handDistanceWarning == nil && (25...60).contains(scale)
+    }
+
+    private var handReadabilityTitle: String {
+        let percentage = manager.handScalePercent.map { " • \($0)%" } ?? ""
+        if let warning = manager.handDistanceWarning {
+            return warning + percentage
+        }
+        if handReadabilityIsIdeal {
+            return "VISION READY" + percentage
+        }
+        return "READABLE • ADJUST TO IDEAL RANGE" + percentage
+    }
+
+    private var handReadabilityColor: Color {
+        if manager.handDistanceWarning != nil { return .orange }
+        return handReadabilityIsIdeal ? .green : .yellow
+    }
+
+    private var strumPatternCard: some View {
+        VStack(alignment: .trailing, spacing: 7) {
+            Text("STRUMMING PATTERN")
+                .font(.custom("Inter", size: 11))
+                .fontWeight(.bold)
+                .tracking(1.2)
+                .foregroundStyle(cardSecondaryForeground)
+
+            HStack(spacing: 8) {
+                Image(systemName: manager.isStrumTypeLocked ? "lock.fill" : "hand.raised.fill")
+                Text(manager.activeStrumType.rawValue)
+                    .font(.custom("Playfair Display", size: 30))
+                    .fontWeight(.bold)
+            }
+            .foregroundStyle(manager.isStrumTypeLocked ? Color.green : cardForeground)
+
+            Text(manager.isStrumTypeLocked
+                 ? "LOCKED • turn the back of your hand to camera, then pinch to pick"
+                 : "Show Maj, Min7, Min, or Maj7")
+                .font(.custom("Inter", size: 10))
+                .foregroundStyle(cardSecondaryForeground)
+                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: 270, alignment: .trailing)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 13)
+        .frame(width: 300, height: 126, alignment: .trailing)
+        .background(panelBackground.opacity(0.88))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(
+                    manager.isStrumTypeLocked ? Color.green.opacity(0.7) : Color.white.opacity(0.18),
+                    lineWidth: 1
+                )
+        }
+    }
+
+    private var accidentalTitle: String {
+        switch manager.activeAccidental {
+        case .sharp: return "SHARP"
+        case .natural: return "NORMAL"
+        case .flat: return "FLAT"
+        }
+    }
+
+    private var accidentalIcon: String {
+        switch manager.activeAccidental {
+        case .sharp: return "number"
+        case .natural: return "music.note"
+        case .flat: return "music.note"
+        }
+    }
+
+    private var accidentalColor: Color {
+        switch manager.activeAccidental {
+        case .sharp: return .orange
+        case .natural: return Color("SecondaryFont")
+        case .flat: return .blue
+        }
+    }
+
+    private var panelBackground: Color {
+        colorScheme == .dark ? .black : .white
+    }
+
+    private var cardForeground: Color {
+        colorScheme == .dark ? .white : .black
+    }
+
+    private var cardSecondaryForeground: Color {
+        cardForeground.opacity(0.68)
     }
 
     private func triggerStrumAction(for stringIndex: Int) {

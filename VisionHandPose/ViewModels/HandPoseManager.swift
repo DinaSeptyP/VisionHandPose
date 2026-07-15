@@ -283,6 +283,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     @Published var chordHand: HandPose? = nil
     @Published var strumHand: HandPose? = nil
     @Published private(set) var handDistanceWarning: String? = nil
+    @Published private(set) var handScalePercent: Int? = nil
     @Published private(set) var needsNeutralPose = false
     @Published private(set) var isStrumTypeLocked = false
 
@@ -313,7 +314,10 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     nonisolated(unsafe) private var isPinching = false
     nonisolated(unsafe) private var lastTriggerTimes: [Int: Date] = [:]
     nonisolated(unsafe) private var lastStrumPinchRatio: CGFloat? = nil
+    nonisolated(unsafe) private var stringsInsideKnuckleBand: Set<Int> = []
+    nonisolated(unsafe) private var strumTypeIsLockedForCapture = false
     private let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+    private let knuckleHitBand: CGFloat = 0.014
     private let debounceInterval: TimeInterval = 0.07 // responsive repeated picking without double-trigger noise
     // A natural "pick" pinch often leaves a small visible gap on camera.
     // These wider hysteresis limits recognize it before its transitional
@@ -332,6 +336,19 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     }
 
     // MARK: - Camera Setup
+
+    /// Restores an existing camera authorization without presenting the
+    /// system prompt. First-time permission remains an explicit user action
+    /// from the permission screen.
+    func startIfCameraAlreadyAuthorized() {
+        guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
+            cameraPermissionGranted = false
+            return
+        }
+
+        cameraPermissionGranted = true
+        startSession()
+    }
 
     func checkPermissionAndStart() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -524,6 +541,20 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         return nil
     }
 
+    private func visibleHandScalePercent(for hands: [HandPose]) -> Int? {
+        let scales = hands.compactMap { hand -> CGFloat? in
+            let points = hand.joints.values.map(\.location)
+            guard let minX = points.map(\.x).min(),
+                  let maxX = points.map(\.x).max(),
+                  let minY = points.map(\.y).min(),
+                  let maxY = points.map(\.y).max() else { return nil }
+            return max(maxX - minX, maxY - minY)
+        }
+
+        guard let largestVisibleHand = scales.max() else { return nil }
+        return Int((largestVisibleHand * 100).rounded())
+    }
+
     private func stabilizedStrumType(
         for candidate: StrumChordType,
         handVisible: Bool
@@ -635,7 +666,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                     if sHand == nil { sHand = hand }
                 }
             }
-            
+
             // Classify chord from Chord Hand
             var detectedChord: MusicalChord = .none
             var detectedNeutralFist = false
@@ -669,6 +700,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                strumHand.readiness.canReadChord,
                let thumbTip = strumHand.joints[.thumbTip],
                let indexTip = strumHand.joints[.indexTip],
+               let indexDIP = strumHand.joints[.indexDIP],
                let indexMCP = strumHand.joints[.indexMCP],
                let littleMCP = strumHand.joints[.littleMCP] {
                 let palmWidth = dist(indexMCP.location, littleMCP.location)
@@ -686,22 +718,17 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                 if isPinching {
                     if ratio > pinchReleaseRatio {
                         isPinching = false
-                        lastPickPoint = nil
                     }
                 } else if ratio < pinchStartRatio {
                     isPinching = true
-                    // Start tracking here; forming a pinch must not pluck a
-                    // string before the pick itself moves across that string.
-                    lastPickPoint = CGPoint(
-                        x: (thumbTip.location.x + indexTip.location.x) / 2,
-                        y: (thumbTip.location.y + indexTip.location.y) / 2
-                    )
                 }
 
-                if isPinching {
-                    let currentPickPoint = CGPoint(
-                        x: (thumbTip.location.x + indexTip.location.x) / 2,
-                        y: (thumbTip.location.y + indexTip.location.y) / 2
+                if strumTypeIsLockedForCapture {
+                    let currentPickPoint = indexDIP.location
+                    let currentlyInsideBand = Set(
+                        stringYPositions.indices.filter {
+                            abs(currentPickPoint.y - stringYPositions[$0]) <= knuckleHitBand
+                        }
                     )
 
                     if let previousPickPoint = lastPickPoint {
@@ -711,8 +738,10 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                             let crossed = (previousPickPoint.y - stringY)
                                 * (currentPickPoint.y - stringY) <= 0
                                 && previousPickPoint.y != currentPickPoint.y
+                            let enteredHitBand = currentlyInsideBand.contains(i)
+                                && !stringsInsideKnuckleBand.contains(i)
 
-                            if crossed {
+                            if crossed || enteredHitBand {
                                 let now = Date()
                                 let lastTime = lastTriggerTimes[i] ?? Date.distantPast
                                 if now.timeIntervalSince(lastTime) >= debounceInterval {
@@ -727,12 +756,17 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                             }
                         }
                     }
+                    stringsInsideKnuckleBand = currentlyInsideBand
                     lastPickPoint = currentPickPoint
+                } else {
+                    lastPickPoint = nil
+                    stringsInsideKnuckleBand.removeAll()
                 }
             } else {
                 isPinching = false
                 lastPickPoint = nil
                 lastStrumPinchRatio = nil
+                stringsInsideKnuckleBand.removeAll()
             }
 
             // A pinch changes the apparent thumb/index pose. It is a playing
@@ -787,6 +821,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                     for: strumTypeCandidate,
                     handVisible: strumHandForUI != nil
                 )
+                self.strumTypeIsLockedForCapture = displayedStrumType != .none
 
                 self.chordHand = chordHandForUI
                 self.strumHand = strumHandForUI
@@ -801,6 +836,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                 if let s = strumHandForUI { handsList.append(s) }
                 self.detectedHands = handsList
                 self.handDistanceWarning = self.distanceWarning(for: handsList)
+                self.handScalePercent = self.visibleHandScalePercent(for: handsList)
 
                 // Status Messaging
                 if self.needsNeutralPose {
@@ -928,7 +964,15 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         let thumbPalmDistance = [indexMCP, middleMCP, ringMCP, littleMCP]
             .map { dist(thumbTip.location, $0.location) }
             .min() ?? .greatestFiniteMagnitude
-        let thumbCurled = thumbPalmDistance < palmWidth * 0.85
+        let palmLength = dist(wrist.location, middleMCP.location)
+        let thumbWristDistance = dist(wrist.location, thumbTip.location)
+
+        // On a fist, Vision can place the thumb just outside the old strict
+        // palm threshold and make the pose look like thumb-only A. Accept a
+        // thumb that remains compact relative to either palm width or length.
+        // A genuinely raised thumb remains far enough from both measurements.
+        let thumbCurled = thumbPalmDistance < palmWidth * 0.98
+            || thumbWristDistance < palmLength * 1.45
         return thumbCurled
             && isCurled(indexPIP, indexTip)
             && isCurled(middlePIP, middleTip)
