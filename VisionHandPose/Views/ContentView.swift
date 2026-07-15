@@ -9,7 +9,7 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             PlayView(manager: manager, chordPlayer: chordPlayer)
                 .tabItem {
-                    Label("Air Guitar", systemImage: "guitar.fill")
+                    Label("Air Guitar", systemImage: "music.pages.fill")
                 }
                 .tag(0)
             

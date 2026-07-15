@@ -42,7 +42,7 @@ struct SettingsView: View {
                             Image(systemName: "doc.text.magnifyingglass")
                                 .foregroundColor(.purple)
                                 .frame(width: 24)
-                            Text("Vision vs ARKit & CoreML")
+                            Text("Vision")
                         }
                     }
                     
@@ -110,20 +110,6 @@ struct FrameworkDetailsView: View {
                 
                 Divider().background(Color.white.opacity(0.1))
                 
-                FrameworkComparisonCard(
-                    title: "Vision vs ARKit (AR Session)",
-                    description: "ARKit hand-tracking (`ARHandAnchor`) requires LiDAR/TrueDepth cameras, and consumes high battery because it manages a 3D scene camera feed. Vision processes frames independently on any 2D RGB video stream, allowing standard devices (including iPad, iPhone, and Mac) to run air instruments efficiently."
-                )
-                
-                FrameworkComparisonCard(
-                    title: "Vision vs CoreML (Custom Action Classifiers)",
-                    description: "CoreML models require recording hundreds of training videos of hands in different states and exporting a large model binary. The Vision-only approach computes relationships dynamically in Swift via Euclidean distances (Pythagoras theorem) - keeping the compile size tiny and execution overhead close to zero."
-                )
-                
-                FrameworkComparisonCard(
-                    title: "Vision vs MediaPipe (Google/Cross-Platform)",
-                    description: "MediaPipe is an external C++ dependency requiring large Pods or Package imports, increasing download size and causing compilation headaches in Swift. Apple Vision is built directly into iOS/iPadOS/macOS kernels, requiring zero imports except standard Apple frameworks."
-                )
             }
             .padding()
         }
