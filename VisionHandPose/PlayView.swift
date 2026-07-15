@@ -107,10 +107,10 @@ struct PlayView: View {
     
     private func triggerStrumAction(for stringIndex: Int) {
         let chord = manager.activeChord
-        guard manager.activeStrumType != .none,
-              stringIndex >= 0 && stringIndex < 6 else { return }
-        
-        let noteName = chord.guitarStrings[stringIndex]
+        guard stringIndex >= 0 && stringIndex < 6 else { return }
+
+        let voicing = chord.voicing(for: manager.activeStrumType)
+        let noteName = voicing[stringIndex]
         if !noteName.isEmpty {
             chordPlayer.playNote(noteName)
         }
@@ -281,7 +281,8 @@ struct PlayView: View {
                     
                     // Hovering Note indicator
                     let textX = manager.isRightHanded ? w * 0.54 : w * 0.42
-                    let noteLabel = manager.activeChord.guitarStrings[i]
+                    let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
+                    let noteLabel = voicing[i]
                     if !noteLabel.isEmpty {
                         Text(noteLabel)
                             .font(.system(size: 9, weight: .bold, design: .rounded))
@@ -441,7 +442,8 @@ struct PlayView: View {
                             .foregroundColor(.white.opacity(0.7))
                     }
 
-                    Text("Voicing: " + manager.activeChord.guitarStrings.filter({ !$0.isEmpty }).joined(separator: " - "))
+                    let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
+                    Text("Voicing: " + voicing.filter({ !$0.isEmpty }).joined(separator: " - "))
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.white.opacity(0.5))
 
@@ -482,7 +484,8 @@ struct PlayView: View {
                 let strings = ["6th String (E3)", "5th String (A3)", "4th String (D4)", "3rd String (G4)", "2nd String (B4)", "1st String (E5)"]
                 
                 ForEach(0..<6) { i in
-                    let note = manager.activeChord.guitarStrings[i]
+                    let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
+                    let note = voicing[i]
                     
                     Button(action: { triggerStrumAction(for: i) }) {
                         HStack {

@@ -80,7 +80,7 @@ enum MusicalChord: String {
         case .e:    return "Index + middle + ring only"
         case .f:    return "Index + middle + ring + little only"
         case .g:    return "All five fingers"
-        case .a:    return "Thumb only — thumbs up"
+        case .a:    return "Thumb only"
         case .b:    return "Thumb + index only"
         }
     }
@@ -101,23 +101,79 @@ enum MusicalChord: String {
 
     // The 6-string voicing mapped to the string indices (0 = string 6, 5 = string 1)
     var guitarStrings: [String] {
-        switch self {
-        case .none:
-            return ["", "", "", "", "", ""]
-        case .c:
+        voicing(for: .major)
+    }
+
+    /// Returns 6-string guitar voicing based on chord type.
+    /// Each entry is a note name (e.g., "C", "E", "G") or empty string for muted strings.
+    func voicing(for type: StrumChordType) -> [String] {
+        switch (self, type) {
+        // C chord variants
+        case (.c, .major):
             return ["E3", "C", "E", "G", "C5", "E5"]
-        case .d:
+        case (.c, .major7):
+            return ["E3", "C", "E", "G", "B4", "C5"]
+        case (.c, .minor):
+            return ["E3", "C", "Eb", "G", "C5", "Eb5"]
+        case (.c, .minor7):
+            return ["E3", "C", "Eb", "G", "Bb4", "Eb5"]
+        // D chord variants
+        case (.d, .major):
             return ["D3", "A3", "D", "F#", "A", "D5"]
-        case .e:
+        case (.d, .major7):
+            return ["D3", "A3", "D", "F#", "A", "C#5"]
+        case (.d, .minor):
+            return ["D3", "A3", "D", "F", "A", "D5"]
+        case (.d, .minor7):
+            return ["D3", "A3", "D", "F", "C", "A4"]
+        // E chord variants
+        case (.e, .major):
             return ["E3", "B3", "E", "G", "B", "E5"]
-        case .f:
+        case (.e, .major7):
+            return ["E3", "B3", "E", "G", "D", "B4"]
+        case (.e, .minor):
+            return ["E3", "B3", "E", "G", "B", "Eb5"]
+        case (.e, .minor7):
+            return ["E3", "B3", "E", "G", "D", "Eb5"]
+        // F chord variants
+        case (.f, .major):
             return ["F3", "C", "F", "A", "C5", "F5"]
-        case .g:
+        case (.f, .major7):
+            return ["F3", "C", "F", "A", "E", "C5"]
+        case (.f, .minor):
+            return ["F3", "C", "F", "Ab", "C5", "Eb5"]
+        case (.f, .minor7):
+            return ["F3", "C", "F", "Ab", "Eb", "C5"]
+        // G chord variants
+        case (.g, .major):
             return ["G3", "B3", "D", "G", "B", "G5"]
-        case .a:
+        case (.g, .major7):
+            return ["G3", "B3", "D", "F#", "A", "B4"]
+        case (.g, .minor):
+            return ["G3", "B3", "D", "F", "B", "G5"]
+        case (.g, .minor7):
+            return ["G3", "B3", "D", "F", "Eb", "B4"]
+        // A chord variants
+        case (.a, .major):
             return ["E3", "A3", "E", "A", "C#5", "E5"]
-        case .b:
+        case (.a, .major7):
+            return ["E3", "A3", "E", "G#", "A", "C#5"]
+        case (.a, .minor):
+            return ["E3", "A3", "E", "A", "C5", "E5"]
+        case (.a, .minor7):
+            return ["E3", "A3", "E", "G", "C", "A4"]
+        // B chord variants
+        case (.b, .major):
             return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
+        case (.b, .major7):
+            return ["F#3", "B3", "F#", "A#", "D#", "F#5"]
+        case (.b, .minor):
+            return ["F#3", "B3", "F#", "A", "D#5", "F#5"]
+        case (.b, .minor7):
+            return ["F#3", "B3", "F#", "A", "D", "F#5"]
+        // none or unrecognized combinations
+        default:
+            return ["", "", "", "", "", ""]
         }
     }
 }
@@ -953,7 +1009,8 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         case (false, true,  false, false, false): baseNote = .c  // Index only
         case (false, true,  true,  false, false): baseNote = .d  // Index + Middle
         case (false, true,  true,  true,  false): baseNote = .e  // Index + Middle + Ring
-        case (false, true,  true,  true,  true): baseNote = .f  // All except thumb
+        case (true, false, false, false, false): baseNote = .a  // Thumb only
+        case (false, true,  true,  true,  true): baseNote = .f  // Index + Middle + Ring + Little
         case (true,  true,  true,  true,  true): baseNote = .g  // All five
         case (true,  true,  false, false, false): baseNote = .b  // Thumb + Index
         default: return .none
