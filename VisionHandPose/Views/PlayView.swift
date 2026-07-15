@@ -5,13 +5,13 @@ import Combine
 struct PlayView: View {
     @ObservedObject var manager: HandPoseManager
     @ObservedObject var chordPlayer: ChordPlayer
-    
+
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @State private var stringVibrations: [CGFloat] = [0, 0, 0, 0, 0, 0]
     @State private var lastTriggeredStrings: [Bool] = [false, false, false, false, false, false]
     @State private var showTutorial = true
     @State private var isLandscape = false
-    
+
     var body: some View {
         NavigationStack {
             Group {
@@ -21,17 +21,17 @@ struct PlayView: View {
                         HStack(spacing: 24) {
                             cameraSection
                                 .frame(maxWidth: .infinity)
-                            
+
                             ScrollView {
                                 VStack(spacing: 20) {
                                     activeChordCard
-                                    
+
                                     strumControlCard
-                                    
+
                                     if showTutorial {
                                         tutorialGuideCard
                                     }
-                                    
+
                                     Spacer()
                                 }
                                 .padding(.vertical)
@@ -44,11 +44,11 @@ struct PlayView: View {
                         ScrollView {
                             VStack(spacing: 20) {
                                 cameraSection
-                                
+
                                 activeChordCard
-                                
+
                                 strumControlCard
-                                
+
                                 if showTutorial {
                                     tutorialGuideCard
                                 }
@@ -57,7 +57,7 @@ struct PlayView: View {
                         }
                     }
                 } else {
-                    permissionRequestView
+                    PermissionRequestView(manager: manager)
                 }
             }
             .navigationTitle("Air Guitar Play")
@@ -73,7 +73,7 @@ struct PlayView: View {
                         .font(.footnote)
                     }
                 }
-                
+
                 // Right Toolbar: Camera Rotation & Tutorial toggles
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
@@ -82,7 +82,7 @@ struct PlayView: View {
                         }) {
                             Image(systemName: showTutorial ? "info.circle.fill" : "info.circle")
                         }
-                        
+
                         Button(action: { manager.toggleCamera() }) {
                             Image(systemName: "camera.rotate.fill")
                         }
@@ -102,9 +102,9 @@ struct PlayView: View {
             }
         }
     }
-    
+
     // MARK: - Action Trigger
-    
+
     private func triggerStrumAction(for stringIndex: Int) {
         let chord = manager.activeChord
         guard stringIndex >= 0 && stringIndex < 6 else { return }
@@ -114,23 +114,23 @@ struct PlayView: View {
         if !noteName.isEmpty {
             chordPlayer.playNote(noteName)
         }
-        
+
         withAnimation(.interactiveSpring(response: 0.12, dampingFraction: 0.12, blendDuration: 0)) {
             stringVibrations[stringIndex] = 14
             lastTriggeredStrings[stringIndex] = true
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
             withAnimation(.interactiveSpring(response: 0.22, dampingFraction: 0.18, blendDuration: 0)) {
                 stringVibrations[stringIndex] = 0
             }
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             lastTriggeredStrings[stringIndex] = false
         }
     }
-    
+
     private func strumAll() {
         for i in 0..<6 {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.045) {
@@ -138,9 +138,9 @@ struct PlayView: View {
             }
         }
     }
-    
+
     // MARK: - Camera & Overlay Section
-    
+
     private var cameraSection: some View {
         ZStack {
             CameraPreviewView(session: manager.session)
@@ -156,7 +156,7 @@ struct PlayView: View {
                             lineWidth: 2
                         )
                 )
-            
+
             // Vision Overlays
             GeometryReader { geo in
                 let w = geo.size.width
@@ -175,7 +175,7 @@ struct PlayView: View {
                     ),
                     style: StrokeStyle(lineWidth: 1.5, dash: [8, 4])
                 )
-                
+
                 // Zone Labels
                 ZoneLabel(
                     title: manager.isRightHanded ? "CHORD ZONE (FRET)" : "STRUM ZONE (STRINGS)",
@@ -240,7 +240,7 @@ struct PlayView: View {
                         .clipShape(Capsule())
                         .position(x: w * 0.44, y: h * 0.66)
                 }
-                
+
                 // Skeletons
                 if let cHand = manager.chordHand {
                     drawHandSkeleton(cHand, width: w, height: h, color: .purple)
@@ -256,17 +256,17 @@ struct PlayView: View {
                         .frame(width: w * 0.48, height: h)
                         .position(x: w * 0.24, y: h * 0.5)
                 }
-                
+
                 // 6 horizontal strings
                 let startX = manager.isRightHanded ? w * 0.52 : w * 0.05
                 let endX = manager.isRightHanded ? w * 0.95 : w * 0.48
                 let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
                 let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
-                
+
                 ForEach(0..<6) { i in
                     let stringY = stringYPositions[i] * h
                     let vibration = stringVibrations[i]
-                    
+
                     Path { path in
                         path.move(to: CGPoint(x: startX, y: stringY))
                         path.addQuadCurve(
@@ -279,7 +279,7 @@ struct PlayView: View {
                         lineWidth: lastTriggeredStrings[i] ? 4.0 : 1.5
                     )
                     .shadow(color: lastTriggeredStrings[i] ? .green : .clear, radius: 8)
-                    
+
                     // Hovering Note indicator
                     let textX = manager.isRightHanded ? w * 0.54 : w * 0.42
                     let noteLabel = voicing[i]
@@ -295,7 +295,7 @@ struct PlayView: View {
                     }
                 }
             }
-            
+
             // Bottom Status Message
             VStack {
                 if let warning = manager.handDistanceWarning {
@@ -332,46 +332,10 @@ struct PlayView: View {
         .background(Color.black.opacity(0.2))
         .cornerRadius(24)
     }
-    
-    private func forceLandscape() {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
-        let preferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: .landscape)
-        windowScene.requestGeometryUpdate(preferences)
-    }
-    
-    private func updateOrientation() {
-        let orientation = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?
-            .interfaceOrientation
-        isLandscape = orientation?.isLandscape == true
-    }
-    
-    private func drawHandSkeleton(_ hand: HandPose, width: CGFloat, height: CGFloat, color: Color) -> some View {
-        Group {
-            Path { path in
-                for line in hand.skeletonLines {
-                    guard let first = line.first else { continue }
-                    path.move(to: CGPoint(x: first.x * width, y: first.y * height))
-                    for pt in line.dropFirst() {
-                        path.addLine(to: CGPoint(x: pt.x * width, y: pt.y * height))
-                    }
-                }
-            }
-            .stroke(color.opacity(0.7), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-            
-            ForEach(Array(hand.joints.values)) { joint in
-                Circle()
-                    .fill(color)
-                    .frame(width: 7, height: 7)
-                    .shadow(color: color, radius: 3)
-                    .position(x: joint.location.x * width, y: joint.location.y * height)
-            }
-        }
-    }
-    
+
+
     // MARK: - Subcards
-    
+
     private var activeChordCard: some View {
         VStack(spacing: 12) {
             HStack {
@@ -472,33 +436,33 @@ struct PlayView: View {
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
-    
+
     private var strumControlCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("String Strum Dashboard")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.white.opacity(0.6))
-            
+
             VStack(spacing: 8) {
                 let strings = ["6th String (E3)", "5th String (A3)", "4th String (D4)", "3rd String (G4)", "2nd String (B4)", "1st String (E5)"]
                 let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
-                
+
                 ForEach(0..<6) { i in
                     let note = voicing[i]
-                    
+
                     Button(action: { triggerStrumAction(for: i) }) {
                         HStack {
                             Circle()
                                 .fill(lastTriggeredStrings[i] ? Color.green : Color.white.opacity(0.2))
                                 .frame(width: 8, height: 8)
-                            
+
                             Text(strings[i])
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.7))
-                            
+
                             Spacer()
-                            
+
                             if !note.isEmpty {
                                 Text(note)
                                     .font(.system(size: 11, weight: .bold, design: .monospaced))
@@ -524,7 +488,7 @@ struct PlayView: View {
         .background(Color.white.opacity(0.05))
         .cornerRadius(18)
     }
-    
+
     private var tutorialGuideCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -532,15 +496,15 @@ struct PlayView: View {
                     .font(.subheadline)
                     .fontWeight(.bold)
                     .foregroundColor(.cyan)
-                
+
                 Spacer()
-                
+
                 Button(action: { withAnimation { showTutorial = false } }) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.white.opacity(0.4))
                 }
             }
-            
+
             VStack(alignment: .leading, spacing: 8) {
                 TutorialRow(step: "1", text: "Normal mode: use the left hand for C, D, E, F, G, or B.")
                 TutorialRow(step: "2", text: "Use the right hand for Maj, Min7, Min, or Maj7. Left-handed mode swaps both hands.")
@@ -552,26 +516,7 @@ struct PlayView: View {
         .background(Color.white.opacity(0.04))
         .cornerRadius(18)
     }
-    
-    private var permissionRequestView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "camera.fill")
-                .font(.system(size: 50))
-                .foregroundColor(.cyan)
-            Text("Camera Permissions Denied")
-                .font(.headline)
-            Text("Please enable camera settings in your iOS/iPadOS settings to play.")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
-                .multilineTextAlignment(.center)
-            Button("Grant Permission") {
-                manager.checkPermissionAndStart()
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.cyan)
-        }
-        .padding()
-    }
+
 }
 
 // MARK: - Helper Views
@@ -675,4 +620,8 @@ private struct FingerDistanceGauges: View {
             .cornerRadius(8)
         }
     }
+}
+
+#Preview {
+    PlayView(manager: HandPoseManager(), chordPlayer: ChordPlayer())
 }

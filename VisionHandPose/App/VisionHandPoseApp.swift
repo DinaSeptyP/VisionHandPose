@@ -11,7 +11,7 @@ import SwiftUI
 struct VisionHandPoseApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            LandingView()
         }
     }
 }
