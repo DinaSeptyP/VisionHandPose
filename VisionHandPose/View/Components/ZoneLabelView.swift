@@ -15,7 +15,7 @@ struct ZoneLabelView: View {
     
     var body: some View {
         Text(title)
-            .font(.custom("Inter", size: 13))
+            .font(.custom("Inter", size: 17))
             .foregroundColor(Color("PrimaryFont"))
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
