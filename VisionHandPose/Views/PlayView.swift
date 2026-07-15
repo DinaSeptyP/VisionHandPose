@@ -261,6 +261,7 @@ struct PlayView: View {
                 let startX = manager.isRightHanded ? w * 0.52 : w * 0.05
                 let endX = manager.isRightHanded ? w * 0.95 : w * 0.48
                 let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+                let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
                 
                 ForEach(0..<6) { i in
                     let stringY = stringYPositions[i] * h
@@ -281,7 +282,6 @@ struct PlayView: View {
                     
                     // Hovering Note indicator
                     let textX = manager.isRightHanded ? w * 0.54 : w * 0.42
-                    let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
                     let noteLabel = voicing[i]
                     if !noteLabel.isEmpty {
                         Text(noteLabel)
