@@ -8,17 +8,20 @@
 import Foundation
 import SwiftUI
 
-var isLandscape = false
+// DeviceOrientation.swift
+import Foundation
+import SwiftUI
+
 func forceLandscape() {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
     let preferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: .landscape)
     windowScene.requestGeometryUpdate(preferences)
 }
 
-func updateOrientation() {
+func currentInterfaceIsLandscape() -> Bool {
     let orientation = UIApplication.shared.connectedScenes
         .compactMap { $0 as? UIWindowScene }
         .first?
         .interfaceOrientation
-    isLandscape = orientation?.isLandscape == true
+    return orientation?.isLandscape == true
 }

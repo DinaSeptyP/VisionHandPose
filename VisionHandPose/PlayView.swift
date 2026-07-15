@@ -91,10 +91,10 @@ struct PlayView: View {
             }
             .onAppear {
                 forceLandscape()
-                updateOrientation()
+                isLandscape = currentInterfaceIsLandscape()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-                updateOrientation()
+                isLandscape = currentInterfaceIsLandscape()
                 manager.updateVideoOrientation()
             }
             .onReceive(manager.stringPluckedSubject) { stringIndex in

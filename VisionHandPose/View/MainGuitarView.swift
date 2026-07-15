@@ -20,9 +20,10 @@ struct MainGuitarView: View {
             if manager.cameraPermissionGranted {
                 if isLandscape {
                     ZStack {
-                        Color.black.opacity(0.2)
-                            .ignoresSafeArea()
+                        //                        Color.black.opacity(0.2)
                         CameraPreviewView(session: manager.session)
+                            .ignoresSafeArea()
+                        
                         
                         GeometryReader { geo in
                             let w = geo.size.width
@@ -127,7 +128,7 @@ struct MainGuitarView: View {
         .navigationBarBackButtonHidden(true)
         .onAppear {
             forceLandscape()
-            updateOrientation()
+            isLandscape = currentInterfaceIsLandscape()
             manager.checkPermissionAndStart()
         }
         .onDisappear {
@@ -166,7 +167,7 @@ struct MainGuitarView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-            updateOrientation()
+            isLandscape = currentInterfaceIsLandscape()
             manager.updateVideoOrientation()
         }
         .onReceive(manager.stringPluckedSubject) { stringIndex in
