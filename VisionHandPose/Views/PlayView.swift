@@ -65,7 +65,7 @@ struct PlayView: View {
             .toolbar {
                 // Left Toolbar: Handedness
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(action: { manager.isRightHanded.toggle() }) {
+                    Button(action: { manager.toggleHandedness() }) {
                         HStack(spacing: 4) {
                             Image(systemName: "hand.raised.fill")
                             Text(manager.isRightHanded ? "Right-Handed" : "Left-Handed")
@@ -108,8 +108,9 @@ struct PlayView: View {
     private func triggerStrumAction(for stringIndex: Int) {
         let chord = manager.activeChord
         guard stringIndex >= 0 && stringIndex < 6 else { return }
-        
-        let noteName = chord.guitarStrings[stringIndex]
+
+        let voicing = chord.voicing(for: manager.activeStrumType)
+        let noteName = voicing[stringIndex]
         if !noteName.isEmpty {
             chordPlayer.playNote(noteName)
         }
@@ -160,7 +161,7 @@ struct PlayView: View {
             GeometryReader { geo in
                 let w = geo.size.width
                 let h = geo.size.height
-                
+
                 // Central Laser partition
                 Path { path in
                     path.move(to: CGPoint(x: w * 0.5, y: 0))
@@ -260,6 +261,7 @@ struct PlayView: View {
                 let startX = manager.isRightHanded ? w * 0.52 : w * 0.05
                 let endX = manager.isRightHanded ? w * 0.95 : w * 0.48
                 let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+                let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
                 
                 ForEach(0..<6) { i in
                     let stringY = stringYPositions[i] * h
@@ -280,7 +282,7 @@ struct PlayView: View {
                     
                     // Hovering Note indicator
                     let textX = manager.isRightHanded ? w * 0.54 : w * 0.42
-                    let noteLabel = manager.activeChord.guitarStrings[i]
+                    let noteLabel = voicing[i]
                     if !noteLabel.isEmpty {
                         Text(noteLabel)
                             .font(.system(size: 9, weight: .bold, design: .rounded))
@@ -296,6 +298,20 @@ struct PlayView: View {
             
             // Bottom Status Message
             VStack {
+                if let warning = manager.handDistanceWarning {
+                    HStack(spacing: 8) {
+                        Image(systemName: "viewfinder.circle.fill")
+                        Text(warning)
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.orange)
+                    .clipShape(Capsule())
+                    .padding(.top, 46)
+                }
+
                 Spacer()
                 HStack {
                     Circle()
@@ -378,10 +394,27 @@ struct PlayView: View {
                     }
 
                     // Strum chord type indicator
-                    if manager.strumHand != nil {
-                        Text(manager.activeStrumType.rawValue)
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundColor(.green)
+                    if manager.strumHand != nil || manager.isStrumTypeLocked {
+                        HStack(spacing: 7) {
+                            Text(manager.activeStrumType.rawValue)
+                                .font(.system(size: 14, weight: .bold, design: .rounded))
+
+                            if manager.isStrumTypeLocked {
+                                Label("LOCKED", systemImage: "lock.fill")
+                                    .font(.system(size: 9, weight: .black, design: .rounded))
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 4)
+                                    .background(Color.green.opacity(0.18))
+                                    .clipShape(Capsule())
+                                    .transition(.scale.combined(with: .opacity))
+                            } else {
+                                Text("SHOW POSE")
+                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .foregroundColor(.yellow)
+                            }
+                        }
+                        .foregroundColor(manager.isStrumTypeLocked ? .green : .white.opacity(0.5))
+                        .animation(.easeOut(duration: 0.15), value: manager.isStrumTypeLocked)
                     }
                 }
 
@@ -409,16 +442,19 @@ struct PlayView: View {
                             .foregroundColor(.white.opacity(0.7))
                     }
 
-                    Text("Voicing: " + manager.activeChord.guitarStrings.filter({ !$0.isEmpty }).joined(separator: " - "))
+                    let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
+                    Text("Voicing: " + voicing.filter({ !$0.isEmpty }).joined(separator: " - "))
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.white.opacity(0.5))
 
                     // Strum type finger pattern
-                    if manager.strumHand != nil {
+                    if manager.strumHand != nil || manager.isStrumTypeLocked {
                         HStack {
-                            Image(systemName: "hand.point.up.fill")
+                            Image(systemName: manager.isStrumTypeLocked ? "hand.pinch.fill" : "hand.point.up.fill")
                                 .foregroundColor(.green)
-                            Text(manager.activeStrumType.fingerPattern)
+                            Text(manager.isStrumTypeLocked
+                                 ? "Type locked — pinch and move across the strings"
+                                 : manager.activeStrumType.fingerPattern)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.7))
                         }
@@ -446,9 +482,10 @@ struct PlayView: View {
             
             VStack(spacing: 8) {
                 let strings = ["6th String (E3)", "5th String (A3)", "4th String (D4)", "3rd String (G4)", "2nd String (B4)", "1st String (E5)"]
+                let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
                 
                 ForEach(0..<6) { i in
-                    let note = manager.activeChord.guitarStrings[i]
+                    let note = voicing[i]
                     
                     Button(action: { triggerStrumAction(for: i) }) {
                         HStack {
@@ -505,9 +542,10 @@ struct PlayView: View {
             }
             
             VStack(alignment: .leading, spacing: 8) {
-                TutorialRow(step: "1", text: "Place both hands in camera view.")
-                TutorialRow(step: "2", text: "Hold up hand shapes in Purple zone to set chord.")
-                TutorialRow(step: "3", text: "Sweep index finger vertically in Green zone to strum strings.")
+                TutorialRow(step: "1", text: "Normal mode: use the left hand for C, D, E, F, G, or B.")
+                TutorialRow(step: "2", text: "Use the right hand for Maj, Min7, Min, or Maj7. Left-handed mode swaps both hands.")
+                TutorialRow(step: "3", text: "Show Maj, Min7, Min, or Maj7 to lock it. Show another type pose anytime to replace it.")
+                TutorialRow(step: "4", text: "Pinch thumb and index like a pick, then move across each string to pluck it.")
             }
         }
         .padding(16)
