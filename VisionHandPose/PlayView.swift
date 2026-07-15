@@ -57,7 +57,7 @@ struct PlayView: View {
                         }
                     }
                 } else {
-                    permissionRequestView
+                    PermissionRequestView(manager: manager)
                 }
             }
             .navigationTitle("Air Guitar Play")
@@ -105,30 +105,7 @@ struct PlayView: View {
     
     // MARK: - Action Trigger
     
-    private func triggerStrumAction(for stringIndex: Int) {
-        let chord = manager.activeChord
-        guard stringIndex >= 0 && stringIndex < 6 else { return }
-        
-        let noteName = chord.guitarStrings[stringIndex]
-        if !noteName.isEmpty {
-            chordPlayer.playNote(noteName)
-        }
-        
-        withAnimation(.interactiveSpring(response: 0.12, dampingFraction: 0.12, blendDuration: 0)) {
-            stringVibrations[stringIndex] = 14
-            lastTriggeredStrings[stringIndex] = true
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
-            withAnimation(.interactiveSpring(response: 0.22, dampingFraction: 0.18, blendDuration: 0)) {
-                stringVibrations[stringIndex] = 0
-            }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            lastTriggeredStrings[stringIndex] = false
-        }
-    }
+    
     
     private func strumAll() {
         for i in 0..<6 {
@@ -317,20 +294,7 @@ struct PlayView: View {
         .cornerRadius(24)
     }
     
-    private func forceLandscape() {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
-        let preferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: .landscape)
-        windowScene.requestGeometryUpdate(preferences)
-    }
-    
-    private func updateOrientation() {
-        let orientation = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?
-            .interfaceOrientation
-        isLandscape = orientation?.isLandscape == true
-    }
-    
+        
     // MARK: - Subcards
     
     private var activeChordCard: some View {
@@ -492,25 +456,6 @@ struct PlayView: View {
         .cornerRadius(18)
     }
     
-    private var permissionRequestView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "camera.fill")
-                .font(.system(size: 50))
-                .foregroundColor(.cyan)
-            Text("Camera Permissions Denied")
-                .font(.headline)
-            Text("Please enable camera settings in your iOS/iPadOS settings to play.")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
-                .multilineTextAlignment(.center)
-            Button("Grant Permission") {
-                manager.checkPermissionAndStart()
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.cyan)
-        }
-        .padding()
-    }
 }
 
 // MARK: - Helper Views
@@ -556,10 +501,10 @@ private struct TutorialRow: View {
 private struct FingerDistanceGauges: View {
     let fingerDistances: [String: CGFloat]
     let threshold: CGFloat = 0.15
-
+    
     private let fingerOrder = ["thumb", "index", "middle", "ring", "little"]
     private let fingerLabels = ["T", "I", "M", "R", "L"]
-
+    
     var body: some View {
         GeometryReader { geo in
             HStack(spacing: 8) {
@@ -567,39 +512,39 @@ private struct FingerDistanceGauges: View {
                     let finger = fingerOrder[i]
                     let distance = fingerDistances[finger] ?? 0
                     let isExtended = distance > threshold
-
+                    
                     VStack(spacing: 4) {
                         // Finger label
                         Text(fingerLabels[i])
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
                             .foregroundColor(.white.opacity(0.6))
-
+                        
                         // Vertical gauge bar
                         ZStack(alignment: .bottom) {
                             // Background track
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(Color.black.opacity(0.4))
                                 .frame(width: 16, height: 80)
-
+                            
                             // Fill bar
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(isExtended ? Color.green : Color.red)
                                 .frame(width: 16, height: min(distance * 200, 80))
                                 .animation(.easeOut(duration: 0.1), value: distance)
-
+                            
                             // Threshold line
                             Rectangle()
                                 .fill(Color.white.opacity(0.5))
                                 .frame(width: 20, height: 2)
                                 .offset(y: -threshold * 200 + 80)
-
+                            
                             // Distance value
                             Text(String(format: "%.2f", distance))
                                 .font(.system(size: 8, weight: .bold, design: .monospaced))
                                 .foregroundColor(.white)
                                 .padding(.top, 2)
                         }
-
+                        
                         // Extended/curled status
                         Text(isExtended ? "↑" : "↓")
                             .font(.system(size: 12, weight: .bold))
@@ -614,6 +559,8 @@ private struct FingerDistanceGauges: View {
             .cornerRadius(8)
         }
     }
+}
+
 #Preview {
     PlayView(manager: HandPoseManager(), chordPlayer: ChordPlayer())
 }
