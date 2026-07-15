@@ -321,7 +321,6 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     private let pinchStartRatio: CGFloat = 0.62
     private let pinchReleaseRatio: CGFloat = 0.82
     nonisolated(unsafe) private var rightHandedForCapture = true
-    nonisolated(unsafe) private var isCaptureMirrored = true
     
     private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
     private var rotationObservation: NSKeyValueObservation?
@@ -411,7 +410,6 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                     if connection.isVideoMirroringSupported {
                         let shouldMirror = self.activeCameraPosition == .front
                         connection.isVideoMirrored = shouldMirror
-                        self.isCaptureMirrored = shouldMirror
                     }
                 }
 
@@ -592,7 +590,6 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         if connection.isVideoMirroringSupported {
             let shouldMirror = activeCameraPosition == .front
             connection.isVideoMirrored = shouldMirror
-            isCaptureMirrored = shouldMirror
         }
     }
     
@@ -620,7 +617,8 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             try handler.perform([handPoseRequest])
             
             let observations = handPoseRequest.results ?? []
-            let rawHands = observations.map { processObservation($0) }
+            let isCaptureMirrored = connection.isVideoMirrored
+            let rawHands = observations.map { processObservation($0, isCaptureMirrored: isCaptureMirrored) }
             
             // Normal mode: anatomical left hand selects the base chord and
             // anatomical right hand selects chord type/strums. Left-handed
@@ -825,7 +823,10 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
     // MARK: - Observation Processing
 
-    private nonisolated func processObservation(_ observation: VNHumanHandPoseObservation) -> HandPose {
+    private nonisolated func processObservation(
+        _ observation: VNHumanHandPoseObservation,
+        isCaptureMirrored: Bool
+    ) -> HandPose {
         var joints: [VNHumanHandPoseObservation.JointName: HandJointPoint] = [:]
 
         let allJoints: [VNHumanHandPoseObservation.JointName] = [
