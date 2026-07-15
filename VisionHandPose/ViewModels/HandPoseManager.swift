@@ -159,7 +159,7 @@ enum MusicalChord: String {
         case (.a, .minor):
             return ["E3", "A3", "E", "A", "C5", "E5"]
         case (.a, .minor7):
-            return ["E3", "A3", "E", "G", "C", "A4"]
+            return ["E3", "A3", "E", "G", "C", "A"]
         // B chord variants
         case (.b, .major):
             return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
