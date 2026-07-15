@@ -482,9 +482,9 @@ struct PlayView: View {
             
             VStack(spacing: 8) {
                 let strings = ["6th String (E3)", "5th String (A3)", "4th String (D4)", "3rd String (G4)", "2nd String (B4)", "1st String (E5)"]
+                let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
                 
                 ForEach(0..<6) { i in
-                    let voicing = manager.activeChord.voicing(for: manager.activeStrumType)
                     let note = voicing[i]
                     
                     Button(action: { triggerStrumAction(for: i) }) {
