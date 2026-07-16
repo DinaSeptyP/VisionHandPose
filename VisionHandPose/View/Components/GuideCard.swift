@@ -15,54 +15,15 @@ struct GuideCard: View {
     @State var tip: String
     var body: some View {
         VStack(alignment: .leading) {
-            VStack(alignment: .leading) {
-                Text("0\(number)")
-                    .font(.custom("Playfair Display", size: 180))
-                    .fontWeight(.black)
-                    .foregroundStyle(Color("PrimaryBrown").opacity(0.2))
-                Text("\(Image(systemName: "\(logo)"))")
-                    .font(.custom("Playfair Display", size: 40))
-                    .foregroundStyle(Color("PrimaryFont"))
-                    .padding(25)
-                    .background(Color("SecondaryFont").opacity(0.9))
-                    .cornerRadius(20)
-                    .padding(.top, -220)
-            }
-            .padding(.bottom, -100)
+            GuideHeading(number: number, logo: logo, title: title)
+            Text(subtitle)
+                .font(.custom("Inter", size: 23))
+                .fontWeight(.regular)
+                .foregroundStyle(Color("PrimaryBackground"))
+                .frame(maxWidth: 600, alignment: .leading)
+                .padding(.bottom, 50)
             
-            VStack(alignment: .leading) {
-                Text(title)
-                    .font(.custom("Playfair Display", size: 60))
-                    .fontWeight(.black)
-                    .foregroundStyle(Color("PrimaryBackground"))
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.bottom, 10)
-                Text(subtitle)
-                    .font(.custom("Inter", size: 23))
-                    .fontWeight(.regular)
-                    .foregroundStyle(Color("PrimaryBackground"))
-            }
-            .frame(maxWidth: 600, alignment: .leading)
-            .padding(.bottom, 50)
-            
-            HStack {
-                Text("\(Image(systemName: "lightbulb.max"))")
-                    .font(.custom("Inter", size: 20))
-                    .foregroundStyle(Color("SecondaryFont"))
-                Text("Tip: " + tip)
-                    .font(.custom("Inter", size: 20))
-                    .fontWeight(.light)
-                    .foregroundStyle(Color("PrimaryBrown"))
-            }
-            .padding()
-            .background(Color("SecondaryFont").opacity(0.1))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color("SecondaryFont"), lineWidth: 0.5)
-            )
+            GuideTipCard(tip: tip)
         }
         .padding()
         .padding(.top, -50)
