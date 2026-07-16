@@ -284,7 +284,6 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     @Published var strumHand: HandPose? = nil
     @Published private(set) var handDistanceWarning: String? = nil
     @Published private(set) var handScalePercent: Int? = nil
-    @Published private(set) var needsNeutralPose = false
     @Published private(set) var isStrumTypeLocked = false
 
     // Pose changes must remain consistent for several camera frames before
@@ -293,9 +292,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     private var stableChord: MusicalChord = .none
     private var pendingChord: MusicalChord = .none
     private var pendingChordFrameCount = 0
-    private var neutralFistFrameCount = 0
     private var missingChordHandFrameCount = 0
-    private var chordChangeArmed = true
     private var stableStrumType: StrumChordType = .none
     private var pendingStrumType: StrumChordType = .none
     private var pendingStrumTypeFrameCount = 0
@@ -459,49 +456,32 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
     private func stabilizedChord(
         for candidate: MusicalChord,
-        isNeutralFist: Bool,
         handVisible: Bool
     ) -> MusicalChord {
         guard handVisible else {
             missingChordHandFrameCount += 1
             if missingChordHandFrameCount >= 15 {
                 stableChord = .none
-                chordChangeArmed = true
-                needsNeutralPose = false
+                pendingChord = .none
+                pendingChordFrameCount = 0
             }
             return stableChord
         }
         missingChordHandFrameCount = 0
 
-        if isNeutralFist {
-            neutralFistFrameCount += 1
-            if neutralFistFrameCount >= 3 {
-                stableChord = .none
-                pendingChord = .none
-                pendingChordFrameCount = 0
-                chordChangeArmed = true
-                needsNeutralPose = false
-            }
-            return stableChord
-        }
-        neutralFistFrameCount = 0
-
         if candidate == stableChord {
             pendingChord = candidate
             pendingChordFrameCount = 0
-            needsNeutralPose = false
             return stableChord
         }
 
-        // Once a chord is active, another chord is ignored until a fist has
-        // explicitly reset the state. Transitional finger positions can no
-        // longer be interpreted as C, D, E, F, or G along the way.
-        if stableChord != .none && !chordChangeArmed {
-            needsNeutralPose = candidate != .none
+        // Ignore incomplete transition frames, but allow any new valid chord
+        // to replace the active chord automatically once it remains stable.
+        guard candidate != .none else {
+            pendingChord = .none
+            pendingChordFrameCount = 0
             return stableChord
         }
-
-        guard candidate != .none else { return stableChord }
 
         if candidate != pendingChord {
             pendingChord = candidate
@@ -510,11 +490,10 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             pendingChordFrameCount += 1
         }
 
-        if pendingChordFrameCount >= 2 {
+        let requiredFrames = stableChord == .none ? 2 : 3
+        if pendingChordFrameCount >= requiredFrames {
             stableChord = candidate
-            chordChangeArmed = false
             pendingChordFrameCount = 0
-            needsNeutralPose = false
         }
         return stableChord
     }
@@ -669,7 +648,6 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
             // Classify chord from Chord Hand
             var detectedChord: MusicalChord = .none
-            var detectedNeutralFist = false
             var chordFingerDistances: [String: CGFloat] = [:]
             var chordHandCenterY: CGFloat? = nil
             if let chordHand = cHand {
@@ -679,7 +657,6 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                         handCenterY: chordHand.joints[.middleMCP]?.location.y,
                         isLeftHand: chordHand.isLeftHand
                     )
-                    detectedNeutralFist = isNeutralFist(joints: chordHand.joints)
                     chordFingerDistances = calculateFingerDistances(joints: chordHand.joints)
                     chordHandCenterY = chordHand.joints[.middleMCP]?.location.y
                 }
@@ -807,14 +784,12 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
             let chordHandForUI = finalCHand
             let strumHandForUI = finalSHand
             let chordCandidate = detectedChord
-            let neutralFistCandidate = detectedNeutralFist
             let strumTypeCandidate = detectedStrumType ?? .none
             let handCenterYForUI = chordHandCenterY
 
             Task { @MainActor in
                 let displayedChord = self.stabilizedChord(
                     for: chordCandidate,
-                    isNeutralFist: neutralFistCandidate,
                     handVisible: chordHandForUI != nil
                 )
                 let displayedStrumType = self.stabilizedStrumType(
@@ -839,9 +814,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                 self.handScalePercent = self.visibleHandScalePercent(for: handsList)
 
                 // Status Messaging
-                if self.needsNeutralPose {
-                    self.statusMessage = "Make a fist to reset, then show the next chord."
-                } else if chordHandForUI == nil && strumHandForUI == nil {
+                if chordHandForUI == nil && strumHandForUI == nil {
                     self.statusMessage = "No hands detected. Left side = Chord, Right side = Strum."
                 } else if chordHandForUI != nil && strumHandForUI == nil {
                     self.statusMessage = "Chord hand active (\(displayedChord.rawValue)\(self.activeAccidental.suffix)). Raise strum hand on right."
@@ -937,48 +910,6 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     }
 
     // MARK: - Chord Classification
-
-    private nonisolated func isNeutralFist(
-        joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]
-    ) -> Bool {
-        guard
-            let wrist = joints[.wrist],
-            let thumbTip = joints[.thumbTip],
-            let indexMCP = joints[.indexMCP],
-            let middleMCP = joints[.middleMCP],
-            let ringMCP = joints[.ringMCP],
-            let littleMCP = joints[.littleMCP],
-            let indexPIP = joints[.indexPIP], let indexTip = joints[.indexTip],
-            let middlePIP = joints[.middlePIP], let middleTip = joints[.middleTip],
-            let ringPIP = joints[.ringPIP], let ringTip = joints[.ringTip],
-            let littlePIP = joints[.littlePIP], let littleTip = joints[.littleTip]
-        else { return false }
-
-        let palmWidth = dist(indexMCP.location, littleMCP.location)
-        guard palmWidth > 0.0001 else { return false }
-
-        func isCurled(_ pip: HandJointPoint, _ tip: HandJointPoint) -> Bool {
-            dist(tip.location, wrist.location) < dist(pip.location, wrist.location) * 1.15
-        }
-
-        let thumbPalmDistance = [indexMCP, middleMCP, ringMCP, littleMCP]
-            .map { dist(thumbTip.location, $0.location) }
-            .min() ?? .greatestFiniteMagnitude
-        let palmLength = dist(wrist.location, middleMCP.location)
-        let thumbWristDistance = dist(wrist.location, thumbTip.location)
-
-        // On a fist, Vision can place the thumb just outside the old strict
-        // palm threshold and make the pose look like thumb-only A. Accept a
-        // thumb that remains compact relative to either palm width or length.
-        // A genuinely raised thumb remains far enough from both measurements.
-        let thumbCurled = thumbPalmDistance < palmWidth * 0.98
-            || thumbWristDistance < palmLength * 1.45
-        return thumbCurled
-            && isCurled(indexPIP, indexTip)
-            && isCurled(middlePIP, middleTip)
-            && isCurled(ringPIP, ringTip)
-            && isCurled(littlePIP, littleTip)
-    }
 
     private nonisolated func classifyChord(
         joints: [VNHumanHandPoseObservation.JointName: HandJointPoint],
