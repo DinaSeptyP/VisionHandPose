@@ -247,3 +247,7 @@ struct LandmarksView: View {
         }
     }
 }
+
+#Preview {
+    LandmarksView(manager: HandPoseManager())
+}
