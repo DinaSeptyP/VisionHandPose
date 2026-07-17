@@ -12,7 +12,7 @@ enum TutorialPart: String, CaseIterable, Identifiable {
     case hand = "How to Play"
     case chords = "Chord Guides"
     case settings = "Customize Your Experience"
-
+    
     var id: Self { self }
 }
 
@@ -20,22 +20,23 @@ struct GuideView: View {
     @Binding var path: NavigationPath
     @State private var selectedPart: TutorialPart = .camera
     @StateObject private var manager = HandPoseManager()
+    @ObservedObject var chordPlayer: ChordPlayer
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
-
+            
             HStack {
                 ZStack {
                     Color("PrimaryBackground")
                         .ignoresSafeArea()
-
+                    
                     VStack(alignment: .leading) {
                         VStack(alignment: .leading) {
                             Text("G E T T I N G   S T A R T E D")
                                 .font(.custom("Inter", size: 13))
                                 .fontWeight(.medium)
                                 .foregroundStyle(Color("SecondaryFont"))
-
+                            
                             Text("How to")
                                 .font(.custom("Playfair Display", size: 75))
                                 .fontWeight(.black)
@@ -47,7 +48,7 @@ struct GuideView: View {
                                 .foregroundStyle(Color("PrimaryFont"))
                         }
                         .padding(.leading, 30)
-
+                        
                         VStack(alignment: .leading) {
                             ForEach(Array(TutorialPart.allCases.enumerated()), id: \.element) { index, part in
                                 Button {
@@ -94,11 +95,11 @@ struct GuideView: View {
                     }
                 }
                 .frame(width: 0.4*w)
-
+                
                 ZStack {
                     Color("PrimaryFont")
                         .ignoresSafeArea()
-
+                    
                     switch selectedPart {
                     case .camera:
                         CameraGuideCard(
@@ -111,17 +112,26 @@ struct GuideView: View {
                         )
                         
                     case .hand:
-                        GuideCard(
+                        HowToPlayCard(
                             number: 2,
                             logo: "camera",
                             title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
+                            subtitle: "place your hands on the chords and in the strumming position",
+                            tip: "Lorem ipsum dolor sit amet",
+                            manager: manager,
+                            chordPlayer: chordPlayer
                         )
-                    
+                        //                        GuideCard(
+                        //                            number: 2,
+                        //                            logo: "camera",
+                        //                            title: selectedPart.rawValue,
+                        //                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+                        //                            tip: "Lorem ipsum dolor sit amet"
+                        //                        )
+                        
                     case .chords:
                         ChordGuides()
-        
+                        
                     case .settings:
                         GuideCard(
                             number: 4,
@@ -132,7 +142,7 @@ struct GuideView: View {
                         )
                     }
                 }
-//                .onAppear { manager.checkPermissionAndStart() }
+                //                .onAppear { manager.checkPermissionAndStart() }
                 .onDisappear { manager.stopSession() }
             }
         }
@@ -140,5 +150,5 @@ struct GuideView: View {
 }
 
 #Preview {
-    GuideView(path: .constant(NavigationPath()))
+    GuideView(path: .constant(NavigationPath()), chordPlayer: ChordPlayer())
 }
