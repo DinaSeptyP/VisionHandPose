@@ -17,13 +17,12 @@ struct MainGuitarView: View {
 
     var body: some View {
         HandTrackingExperienceView(manager: manager, chordPlayer: chordPlayer)
-                    .ignoresSafeArea()
-                    .navigationBarBackButtonHidden(true)
-                    .onAppear {
-                        forceLandscape()
-                        updateOrientation()
-                        manager.startIfCameraAlreadyAuthorized()
-                    }
+        .navigationBarBackButtonHidden(true)
+        .onAppear {
+            forceLandscape()
+            updateOrientation()
+            manager.startIfCameraAlreadyAuthorized()
+        }
         .navigationBarBackButtonHidden(true)
         .onDisappear {
             manager.stopSession()

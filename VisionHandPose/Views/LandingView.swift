@@ -132,7 +132,6 @@ struct LandingView: View {
             }
 
             .onAppear {
-                
                 DispatchQueue.main.asyncAfter(deadline: .now()) {
                     animate = true
                 }

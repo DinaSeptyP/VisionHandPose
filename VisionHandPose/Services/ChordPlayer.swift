@@ -21,15 +21,25 @@ class ChordPlayer: ObservableObject {
     private var noteStates: [String: NoteState] = [:]
 
     // Note name to MIDI number mapping covering multiple octaves for realistic guitar voicing
-    let noteMap: [String: UInt8] = [
-        // Octave 3 (Low / Bass strings)
-        "C3": 48, "C#3": 49, "D3": 50, "D#3": 51, "E3": 52, "F3": 53, "F#3": 54, "G3": 55, "G#3": 56, "A3": 57, "A#3": 58, "B3": 59,
-        // Octave 4 (Middle strings)
-        "C": 60, "C#": 61, "D": 62, "D#": 63, "Eb": 63, "E": 64, "F": 65, "F#": 66, "G": 67, "G#": 68, "Ab": 68, "A": 69, "A#": 70, "Bb": 70, "B": 71,
-        // Octave 5 (High strings)
-        "C5": 72, "C#5": 73, "D5": 74, "D#5": 75, "Eb5": 75, "E5": 76, "F5": 77, "F#5": 78, "G5": 79, "G#5": 80, "A5": 81, "A#5": 82, "Bb5": 82, "B5": 83,
-        // Compatibility
-        "C2": 72
+//    let noteMap: [String: UInt8] = [
+//        // Octave 3 (Low / Bass strings)
+//        "C3": 48, "C#3": 49, "D3": 50, "D#3": 51, "E3": 52, "F3": 53, "F#3": 54, "G3": 55, "G#3": 56, "A3": 57, "A#3": 58, "B3": 59,
+//        // Octave 4 (Middle strings)
+//        "C": 60, "C#": 61, "D": 62, "D#": 63, "Eb": 63, "E": 64, "F": 65, "F#": 66, "G": 67, "G#": 68, "Ab": 68, "A": 69, "A#": 70, "Bb": 70, "B": 71,
+//        // Octave 5 (High strings)
+//        "C5": 72, "C#5": 73, "D5": 74, "D#5": 75, "Eb5": 75, "E5": 76, "F5": 77, "F#5": 78, "G5": 79, "G#5": 80, "A5": 81, "A#5": 82, "Bb5": 82, "B5": 83,
+//        // Compatibility
+//        "C2": 72
+//    ]
+    
+    //ganti dylan
+    let noteMap : [String: UInt8] = [
+        "E2": 40, "F2": 41, "F#2": 42, "G2": 43, "G#2": 44,
+        "A2": 45, "A#2": 46, "B2": 47, "C3": 48, "C#3": 49,
+        "D3": 50, "D#3": 51, "E3": 52, "F3": 53, "F#3": 54,
+        "G3": 55, "G#3": 56, "A3": 57, "A#3": 58,
+        "B3": 59, "C4": 60, "C#4": 61, "D4": 62, "D#4": 63,
+        "E4": 64, "F4": 65, "F#": 66, "G4": 67, "G#4": 68
     ]
 
     init() {

@@ -217,34 +217,15 @@ struct HandTrackingExperienceView: View {
                         Spacer()
                         HStack(alignment: .bottom, spacing: 20) {
                             if manager.isRightHanded {
-                                chordSummaryCard
-                                Spacer(minLength: 24)
-                                strumPatternCard
+                                Spacer()
+                                ChordResultCard(manager: manager)
                             } else {
-                                strumPatternCard
-                                Spacer(minLength: 24)
-                                chordSummaryCard
+                                ChordResultCard(manager: manager)
+                                Spacer()
                             }
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 58)
-                    }
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Circle()
-                                .fill(manager.chordHand != nil ? Color.green : Color.red)
-                                .frame(width: 6, height: 6)
-                            Text(manager.statusMessage)
-                                .font(.custom("Playfair Display", size: 15))
-                                .fontDesign(.monospaced)
-                                .foregroundColor(Color("PrimaryFont"))
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color("PrimaryDark").opacity(0.7))
-                        .clipShape(Capsule())
-                        .padding(.bottom, 12)
                     }
                 }
                 .onReceive(manager.stringPluckedSubject) { stringIndex in
@@ -253,45 +234,6 @@ struct HandTrackingExperienceView: View {
             } else {
                 PermissionRequestView(manager: manager)
             }
-        }
-    }
-    
-    private var chordSummaryCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("CHORD DETECTED")
-                .font(.custom("Inter", size: 11))
-                .fontWeight(.bold)
-                .tracking(1.4)
-                .foregroundStyle(cardSecondaryForeground)
-            
-            HStack(alignment: .firstTextBaseline, spacing: 7) {
-                Text(manager.activeChord.rawValue + manager.activeAccidental.suffix)
-                    .font(.custom("Playfair Display", size: 48))
-                    .fontWeight(.black)
-                
-                Text(manager.activeStrumType == .none ? "—" : manager.activeStrumType.rawValue)
-                    .font(.custom("Playfair Display", size: 28))
-                    .fontWeight(.bold)
-            }
-            .foregroundStyle(cardForeground)
-            
-            Label(accidentalTitle, systemImage: accidentalIcon)
-                .font(.custom("Inter", size: 11))
-                .fontWeight(.semibold)
-                .foregroundStyle(accidentalColor)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 5)
-                .background(accidentalColor.opacity(0.16))
-                .clipShape(Capsule())
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
-        .frame(width: 300, height: 126, alignment: .leading)
-        .background(panelBackground.opacity(0.88))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color("PrimaryBrown").opacity(0.65), lineWidth: 1)
         }
     }
     
@@ -321,11 +263,11 @@ struct HandTrackingExperienceView: View {
     
     private var strumPatternCard: some View {
         VStack(alignment: .trailing, spacing: 7) {
-            Text("STRUMMING PATTERN")
-                .font(.custom("Inter", size: 11))
-                .fontWeight(.bold)
-                .tracking(1.2)
-                .foregroundStyle(cardSecondaryForeground)
+//            Text("STRUMMING PATTERN")
+//                .font(.custom("Inter", size: 11))
+//                .fontWeight(.bold)
+//                .tracking(1.2)
+//                .foregroundStyle(cardSecondaryForeground)
 
             HStack(spacing: 8) {
                 Image(systemName: manager.isStrumTypeLocked ? "lock.fill" : "hand.raised.fill")
@@ -403,32 +345,6 @@ struct HandTrackingExperienceView: View {
     private var handReadabilityColor: Color {
         if manager.handDistanceWarning != nil { return .orange }
         return handReadabilityIsIdeal ? .green : .yellow
-    }
-
-    
-
-    private var accidentalTitle: String {
-        switch manager.activeAccidental {
-        case .sharp: return "SHARP"
-        case .natural: return "NORMAL"
-        case .flat: return "FLAT"
-        }
-    }
-
-    private var accidentalIcon: String {
-        switch manager.activeAccidental {
-        case .sharp: return "number"
-        case .natural: return "music.note"
-        case .flat: return "music.note"
-        }
-    }
-
-    private var accidentalColor: Color {
-        switch manager.activeAccidental {
-        case .sharp: return .orange
-        case .natural: return Color("SecondaryFont")
-        case .flat: return .blue
-        }
     }
     
     private var panelBackground: Color {
