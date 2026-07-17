@@ -8,10 +8,9 @@
 import SwiftUI
 
 enum TutorialPart: String, CaseIterable, Identifiable {
-    case hand = "Position Your Hand"
     case camera = "Open Camera View"
+    case hand = "How to Play"
     case chords = "Chord Guides"
-    case strumming = "How to Strum"
     case settings = "Customize Your Experience"
 
     var id: Self { self }
@@ -19,7 +18,8 @@ enum TutorialPart: String, CaseIterable, Identifiable {
 
 struct GuideView: View {
     @Binding var path: NavigationPath
-    @State private var selectedPart: TutorialPart = .hand
+    @State private var selectedPart: TutorialPart = .camera
+    @StateObject private var manager = HandPoseManager()
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
@@ -100,15 +100,17 @@ struct GuideView: View {
                         .ignoresSafeArea()
 
                     switch selectedPart {
-                    case .hand:
-                        GuideCard(
+                    case .camera:
+                        CameraGuideCard(
                             number: 1,
                             logo: "guitars",
                             title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
+                            subtitle: "Allow camera permissions to access your camera.",
+                            tip: "Lorem ipsum dolor sit amet",
+                            manager: manager,
                         )
-                    case .camera:
+                        
+                    case .hand:
                         GuideCard(
                             number: 2,
                             logo: "camera",
@@ -116,25 +118,13 @@ struct GuideView: View {
                             subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
                             tip: "Lorem ipsum dolor sit amet"
                         )
+                    
                     case .chords:
-                        GuideCard(
-                            number: 3,
-                            logo: "music.pages",
-                            title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
-                        )
-                    case .strumming:
-                        GuideCard(
-                            number: 4,
-                            logo: "music.note.list",
-                            title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
-                        )
+                        ChordGuides()
+        
                     case .settings:
                         GuideCard(
-                            number: 5,
+                            number: 4,
                             logo: "gearshape",
                             title: selectedPart.rawValue,
                             subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
@@ -142,6 +132,8 @@ struct GuideView: View {
                         )
                     }
                 }
+//                .onAppear { manager.checkPermissionAndStart() }
+                .onDisappear { manager.stopSession() }
             }
         }
     }
