@@ -18,10 +18,8 @@ struct HandTrackingExperienceView: View {
         Group {
             if manager.cameraPermissionGranted {
                 ZStack {
-                    Color.black.opacity(0.2)
-                        .ignoresSafeArea()
                     CameraPreviewView(session: manager.session)
-                        .ignoresSafeArea()
+//                        .ignoresSafeArea()
                     
                     GeometryReader { geo in
                         let w = geo.size.width
@@ -209,7 +207,7 @@ struct HandTrackingExperienceView: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
-        .frame(width: 300, height: 126, alignment: .leading)
+        .frame(width: UIScreen.main.bounds.width * 0.22, alignment: .leading)
         .background(panelBackground.opacity(0.88))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
@@ -268,7 +266,7 @@ struct HandTrackingExperienceView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 13)
-        .frame(width: 300, height: 126, alignment: .trailing)
+        .frame(width: UIScreen.main.bounds.width * 0.22, alignment: .trailing)
         .background(panelBackground.opacity(0.88))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {

@@ -25,6 +25,8 @@ struct GuideView: View {
         GeometryReader { geo in
             let w = geo.size.width
             
+            
+            
             HStack {
                 ZStack {
                     Color("PrimaryBackground")

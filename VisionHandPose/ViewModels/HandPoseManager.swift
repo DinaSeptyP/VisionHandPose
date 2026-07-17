@@ -162,9 +162,9 @@ enum MusicalChord: String {
             return ["D3", "A3", "D", "F", "C", "A"]
         // E chord variants
         case (.e, .chordnormal):
-            return ["E3", "B3", "E", "G", "B", "E5"]
+            return ["E3", "B3", "E", "G#", "B", "E5"]
         case (.e, .chord7):
-            return ["E3", "B3", "E", "G", "D", "B"]
+            return ["E3", "B3", "E", "G#", "D", "B"]
         case (.em, .chordnormal):
             return ["E3", "B3", "E", "G", "B", "E5"]
         case (.em, .chord7):
@@ -202,7 +202,7 @@ enum MusicalChord: String {
         case (.b, .chord7):
             return ["F#3", "B3", "F#", "A#", "D#", "F#5"]
         case (.bm, .chordnormal):
-            return ["F#3", "B3", "F#", "A", "D#5", "F#5"]
+            return ["F#3", "B3", "F#", "A", "D5", "F#5"]
         case (.bm, .chord7):
             return ["F#3", "B3", "F#", "A", "D", "F#5"]
         // none or unrecognized combinations

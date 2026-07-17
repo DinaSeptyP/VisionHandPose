@@ -19,51 +19,44 @@ struct HowToPlayCard: View {
     @ObservedObject var chordPlayer: ChordPlayer
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                headerSection
-                cameraSection
-                tipSection
-                Spacer(minLength: 0)
+        GeometryReader { geo in
+            let width = geo.size.width
+            let height = geo.size.height
+            
+            let titleSize = min(width * 0.07, 54)
+            let numberSize = min(width * 0.15, 120)
+            let iconSize = min(width * 0.045, 32)
+            let subtitleSize = min(width * 0.03, 22)
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    GuideHeading(
+                        number: number,
+                        logo: logo,
+                        title: title,
+                        subtitle: subtitle,
+                        titleSize: titleSize,
+                        numberSize: numberSize,
+                        iconSize: iconSize,
+                        subtitleSize: subtitleSize
+                    )
+                    cameraSection
+                        .frame(height: min(height * 0.42, 490))
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                    tipSection
+                    Spacer(minLength: 0)
+                }
+                .padding(32)
             }
-            .padding(32)
-        }
-        .background(Color("PrimaryFont"))
-        .onAppear {
-            manager.checkPermissionAndStart()
+            .background(Color("PrimaryFont"))
+            .onAppear {
+                manager.checkPermissionAndStart()
+            }
         }
     }
 }
 
 extension HowToPlayCard {
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            ZStack(alignment: .leading) {
-                Text("0\(number)")
-                    .font(.custom("Playfair Display",size: 120))
-                    .fontWeight(.black)
-                    .foregroundStyle(Color("PrimaryBrown").opacity(0.15))
-
-                Image(systemName: logo)
-                    .font(.system(size: 32))
-                    .foregroundStyle(.white)
-                    .padding(20)
-                    .background(Color("SecondaryFont"))
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                    .offset(x: -0, y: 60)
-            }
-
-            Text(title)
-                .font(.custom("Playfair Display",size: 54))
-                .fontWeight(.black)
-                .foregroundStyle(Color("PrimaryBackground"))
-
-            Text(subtitle)
-                .font(.custom("Inter", size: 22))
-                .foregroundStyle(Color("PrimaryBackground"))
-        }
-    }
-
     private var cameraSection: some View {
         Group {
             if manager.cameraPermissionGranted {
@@ -76,8 +69,6 @@ extension HowToPlayCard {
                 }
             }
         }
-        .frame(height: 490)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
     private var tipSection: some View {
