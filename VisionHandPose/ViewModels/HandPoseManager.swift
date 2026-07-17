@@ -53,6 +53,15 @@ enum MusicalChord: String {
     case g = "G"
     case a = "A"
     case b = "B"
+    
+    //dari dylan
+    case cm = "Cm"
+    case dm = "Dm"
+    case em = "Em"
+    case fm = "Fm"
+    case gm = "Gm"
+    case am = "Am"
+    case bm = "Bm"
 
     var accidentalSuffix: String {
         ""
@@ -68,6 +77,15 @@ enum MusicalChord: String {
         case .g:    return "hand.raised.fill"
         case .a:    return "hand.fist.fill"
         case .b:    return "hands.sparkles.fill"
+        
+        //dari dylan
+        case .cm:    return "hand.fist.fill"
+        case .dm:    return "hand.raised.fill"
+        case .em:    return "hand.raised.fill"
+        case .fm:    return "hand.raised.fill"
+        case .gm:    return "hand.raised.fill"
+        case .am:    return "hand.raised.fill"
+        case .bm:    return "hand.raised.slash"
         }
     }
 
@@ -82,6 +100,15 @@ enum MusicalChord: String {
         case .g:    return "All five fingers"
         case .a:    return "Thumb only"
         case .b:    return "Thumb + index only"
+            
+        //dari dylan
+        case .cm:    return "Index + little only"
+        case .dm:    return "Index + middle + little only"
+        case .em:    return "Middle + ring only"
+        case .fm:    return "Thumb + index + middle only"
+        case .gm:    return "Thumb + index + middle + little only"
+        case .am:    return "Thumb + little only"
+        case .bm:    return "Thumb + index + little only"
         }
     }
 
@@ -91,83 +118,92 @@ enum MusicalChord: String {
         case .none: return []
         case .c:    return ["C", "E", "G"]
         case .d:    return ["D", "F#", "A"]
-        case .e:    return ["E", "G", "B"]
+        case .e:    return ["E", "G#", "B"]
         case .f:    return ["F", "A", "C2"]
         case .g:    return ["G", "B", "D"]
         case .a:    return ["A", "C#", "E"]
-        case .b:    return ["B", "D", "F#"]
+        case .b:    return ["B", "D#", "F#"]
+            
+        //dari dylan
+        case .cm:    return ["C", "D#", "G"]
+        case .dm:    return ["D", "F", "A"]
+        case .em:    return ["E", "G", "B"]
+        case .fm:    return ["F", "G#", "C2"]
+        case .gm:    return ["G", "A#", "D"]
+        case .am:    return ["A", "C", "E"]
+        case .bm:    return ["B", "D", "F#"]
         }
     }
 
-    // The 6-string voicing mapped to the string indices (0 = string 6, 5 = string 1)
     var guitarStrings: [String] {
-        voicing(for: .major)
+        voicing(for: .chordnormal)
     }
-
-    /// Returns 6-string guitar voicing based on chord type.
-    /// Each entry is a note name (e.g., "C", "E", "G") or empty string for muted strings.
+    
+    // ADA YANG DI GANTI
     func voicing(for type: StrumChordType) -> [String] {
         switch (self, type) {
         // C chord variants
-        case (.c, .major):
+        case (.c, .chordnormal):
             return ["E3", "C", "E", "G", "C5", "E5"]
-        case (.c, .major7):
+        case (.c, .chord7):
             return ["E3", "C", "E", "G", "B", "C5"]
-        case (.c, .minor):
+        case (.cm, .chordnormal):
             return ["E3", "C", "Eb", "G", "C5", "Eb5"]
-        case (.c, .minor7):
+        case (.cm, .chord7):
             return ["E3", "C", "Eb", "G", "Bb", "Eb5"]
         // D chord variants
-        case (.d, .major):
+        case (.d, .chordnormal):
             return ["D3", "A3", "D", "F#", "A", "D5"]
-        case (.d, .major7):
+        case (.d, .chord7):
             return ["D3", "A3", "D", "F#", "A", "C#5"]
-        case (.d, .minor):
+        case (.dm, .chordnormal):
             return ["D3", "A3", "D", "F", "A", "D5"]
-        case (.d, .minor7):
+        case (.dm, .chord7):
             return ["D3", "A3", "D", "F", "C", "A"]
         // E chord variants
-        case (.e, .major):
+        case (.e, .chordnormal):
             return ["E3", "B3", "E", "G", "B", "E5"]
-        case (.e, .major7):
+        case (.e, .chord7):
             return ["E3", "B3", "E", "G", "D", "B"]
-        case (.e, .minor):
+        case (.em, .chordnormal):
             return ["E3", "B3", "E", "G", "B", "E5"]
-        case (.e, .minor7):
+        case (.em, .chord7):
             return ["E3", "B3", "E", "G", "D", "E5"]
         // F chord variants
-        case (.f, .major):
+        case (.f, .chordnormal):
             return ["F3", "C", "F", "A", "C5", "F5"]
-        case (.f, .major7):
+        case (.f, .chord7):
             return ["F3", "C", "F", "A", "E", "C5"]
-        case (.f, .minor):
+        case (.fm, .chordnormal):
             return ["F3", "C", "F", "Ab", "C5", "Eb5"]
-        case (.f, .minor7):
+        case (.fm, .chord7):
             return ["F3", "C", "F", "Ab", "Eb", "C5"]
         // G chord variants
-        case (.g, .major):
+        case (.g, .chordnormal):
             return ["G3", "B3", "D", "G", "B", "G5"]
-        case (.g, .major7):
+        case (.g, .chord7):
             return ["G3", "B3", "D", "F#", "A", "B"]
-        case (.g, .minor7):
+        case (.gm, .chordnormal):
+            return ["G3", "D", "G", "A#", "D", "G5"]
+        case (.gm, .chord7):
             return ["G3", "B3", "D", "F", "Eb", "B"]
         // A chord variants
-        case (.a, .major):
+        case (.a, .chordnormal):
             return ["E3", "A3", "E", "A", "C#5", "E5"]
-        case (.a, .major7):
+        case (.a, .chord7):
             return ["E3", "A3", "E", "G#", "A", "C#5"]
-        case (.a, .minor):
+        case (.am, .chordnormal):
             return ["E3", "A3", "E", "A", "C5", "E5"]
-        case (.a, .minor7):
+        case (.am, .chord7):
             return ["E3", "A3", "E", "G", "C", "A"]
         // B chord variants
-        case (.b, .major):
+        case (.b, .chordnormal):
             return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
-        case (.b, .major7):
+        case (.b, .chord7):
             return ["F#3", "B3", "F#", "A#", "D#", "F#5"]
-        case (.b, .minor):
+        case (.bm, .chordnormal):
             return ["F#3", "B3", "F#", "A", "D#5", "F#5"]
-        case (.b, .minor7):
+        case (.bm, .chord7):
             return ["F#3", "B3", "F#", "A", "D", "F#5"]
         // none or unrecognized combinations
         default:
@@ -204,28 +240,35 @@ enum Accidental {
 // Strum chord type based on hand pose
 enum StrumChordType: String {
     case none = "—"
-    case major7 = "Maj7"
-    case major = "Maj"
-    case minor7 = "Min7"
-    case minor = "Min"
+//    case major7 = "Maj7"
+//    case major = "Maj"
+//    case minor7 = "Min7"
+//    case minor = "Min"
+    
+    case chordnormal  = ""
+    case chord7  = "7"
 
     var icon: String {
         switch self {
         case .none:    return "hand.raised.slash"
-        case .major7:  return "hand.raised.fingers.spread.fill"
-        case .major:   return "hand.point.up.fill"
-        case .minor7:  return "rock"
-        case .minor:   return "hand.point.down.fill"
+        case .chordnormal:  return "hand.raised.fingers.spread.fill"
+        case .chord7:  return "hand.raised.fingers.spread.fill"
+//        case .major7:  return "hand.raised.fingers.spread.fill"
+//        case .major:   return "hand.point.up.fill"
+//        case .minor7:  return "rock"
+//        case .minor:   return "hand.point.down.fill"
         }
     }
 
     var fingerPattern: String {
         switch self {
         case .none:    return "No chord type detected"
-        case .major:   return "Index only"
-        case .minor7:  return "Thumb + index + little only"
-        case .minor:   return "Little finger only"
-        case .major7:  return "Thumb + index only"
+//        case .major:   return "Index only"
+//        case .minor7:  return "Thumb + index + little only"
+//        case .minor:   return "Little finger only"
+//        case .major7:  return "Thumb + index only"
+        case .chord7:  return "Thumb + index only"
+        case .chordnormal:  return "No hand"
         }
     }
 }
@@ -987,6 +1030,16 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         case (false, true,  true,  true,  true): baseNote = .f  // Index + Middle + Ring + Little
         case (true,  true,  true,  true,  true): baseNote = .g  // All five
         case (true,  true,  false, false, false): baseNote = .b  // Thumb + Index
+            
+        //dari dylan
+        case (false, true, false, false, true): baseNote = .cm  // Index + little only
+        case (false, true, true, false, true): baseNote = .dm  // Index + middle + little only
+        case (false, false, true, true, false): baseNote = .em  // Middle + ring only
+        case (true, true, true, false, false): baseNote = .fm  // Thumb + index + middle only
+        case (true, true, true, false, true): baseNote = .gm  // Thumb + index + middle + little only
+        case (true, false, false, false, true): baseNote = .am  // Thumb + little only
+        case (true, true, false, false, true): baseNote = .bm  // Thumb + index + little only
+            
         default: return .none
         }
 
@@ -1086,14 +1139,16 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         // For Min, the little finger is the meaningful signal. A relaxed
         // thumb can look extended from the side, so do not let thumb noise
         // reject Min as long as index, middle, and ring remain folded.
-        if L && !I && !M && !R {
-            return .minor
-        }
+//        if L && !I && !M && !R {
+//            return .minor
+//        }
 
         switch (T, I, M, R, L) {
-        case (false, true,  false, false, false): return .major
-        case (true,  true,  false, false, true):  return .minor7
-        case (true,  true,  false, false, false): return .major7
+//        case (false, true,  false, false, false): return .major
+//        case (true,  true,  false, false, true):  return .minor7
+//        case (true,  true,  false, false, false): return .major7
+        case (false, false, false, false, false): return .chordnormal
+        case (true,  true,  false, false, false): return .chord7
         default: return .none
         }
     }
