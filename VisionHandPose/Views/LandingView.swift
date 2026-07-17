@@ -118,7 +118,7 @@ struct LandingView: View {
                 if value == "MainGuitar" {
                     MainGuitarView(path: $path, manager: HandPoseManager(), chordPlayer: ChordPlayer())
                 } else if value == "Guide" {
-                    GuideView(path: $path)
+                    GuideView(path: $path, chordPlayer: ChordPlayer())
                 }
             }
         }
