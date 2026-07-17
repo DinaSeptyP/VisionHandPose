@@ -16,6 +16,8 @@ struct HandTrackingExperienceView: View {
     @State private var stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
     @State private var draggingString: Int? = nil
     @State private var dragStartPositions: [CGFloat] = Array(repeating: 0, count: 6)
+    @State private var draggingCorner: Bool? = nil
+    @State private var cornerDragStartPositions: [CGFloat] = Array(repeating: 0, count: 6)
     
     var body: some View {
         Group {
@@ -152,6 +154,54 @@ struct HandTrackingExperienceView: View {
                                         }
                                         .onEnded { _ in
                                             draggingString = nil
+                                        }
+                                )
+                        }
+
+                        let topHandleY = stringYPositions.first! * h
+                        let bottomHandleY = stringYPositions.last! * h
+                        let handleX = manager.isRightHanded ? endX - 12 : startX + 12
+
+                        ForEach([true, false], id: \.self) { isTop in
+                            let handleY = isTop ? topHandleY : bottomHandleY
+                            let isActive = draggingCorner == isTop
+
+                            Circle()
+                                .fill(isActive ? Color.yellow : Color.white.opacity(0.75))
+                                .frame(width: 28, height: 28)
+                                .contentShape(Circle())
+                                .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 1.5))
+                                .shadow(color: isActive ? .yellow : .clear, radius: 6)
+                                .position(x: handleX, y: handleY)
+                                .gesture(
+                                    DragGesture(minimumDistance: 2)
+                                        .onChanged { value in
+                                            if draggingCorner != isTop {
+                                                cornerDragStartPositions = stringYPositions
+                                                draggingCorner = isTop
+                                            }
+                                            let delta = value.translation.height / h
+                                            let minSpan: CGFloat = 0.10
+                                            let anchor = isTop
+                                                ? cornerDragStartPositions[5]
+                                                : cornerDragStartPositions[0]
+                                            let rawEdge = (isTop
+                                                ? cornerDragStartPositions[0]
+                                                : cornerDragStartPositions[5]) + delta
+                                            let movingEdge = isTop
+                                                ? min(max(rawEdge, 0.18), anchor - minSpan)
+                                                : max(min(rawEdge, 0.88), anchor + minSpan)
+                                            let newPositions = (0..<6).map { i in
+                                                let t = CGFloat(i) / 5.0
+                                                return isTop
+                                                    ? movingEdge + (anchor - movingEdge) * t
+                                                    : anchor + (movingEdge - anchor) * t
+                                            }
+                                            stringYPositions = newPositions
+                                            manager.stringYPositions = newPositions
+                                        }
+                                        .onEnded { _ in
+                                            draggingCorner = nil
                                         }
                                 )
                         }
