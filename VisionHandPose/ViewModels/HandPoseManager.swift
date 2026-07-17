@@ -356,7 +356,12 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     nonisolated(unsafe) private var lastStrumPinchRatio: CGFloat? = nil
     nonisolated(unsafe) private var stringsInsideKnuckleBand: Set<Int> = []
     nonisolated(unsafe) private var strumTypeIsLockedForCapture = false
-    private let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+    private let stringPositionsLock = NSLock()
+    private var _stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+    var stringYPositions: [CGFloat] {
+        get { stringPositionsLock.withLock { _stringYPositions } }
+        set { stringPositionsLock.withLock { _stringYPositions = newValue } }
+    }
     private let knuckleHitBand: CGFloat = 0.014
     private let debounceInterval: TimeInterval = 0.07 // responsive repeated picking without double-trigger noise
     // A natural "pick" pinch often leaves a small visible gap on camera.
@@ -745,15 +750,16 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
                 if strumTypeIsLockedForCapture {
                     let currentPickPoint = indexDIP.location
+                    let positions = stringYPositions
                     let currentlyInsideBand = Set(
-                        stringYPositions.indices.filter {
-                            abs(currentPickPoint.y - stringYPositions[$0]) <= knuckleHitBand
+                        positions.indices.filter {
+                            abs(currentPickPoint.y - positions[$0]) <= knuckleHitBand
                         }
                     )
 
                     if let previousPickPoint = lastPickPoint {
-                        for i in 0..<stringYPositions.count {
-                            let stringY = stringYPositions[i]
+                        for i in 0..<positions.count {
+                            let stringY = positions[i]
 
                             let crossed = (previousPickPoint.y - stringY)
                                 * (currentPickPoint.y - stringY) <= 0

@@ -13,6 +13,9 @@ struct HandTrackingExperienceView: View {
     @ObservedObject var chordPlayer: ChordPlayer
     @State private var stringVibrations: [CGFloat] = [0, 0, 0, 0, 0, 0]
     @State private var lastTriggeredStrings: [Bool] = [false, false, false, false, false, false]
+    @State private var stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+    @State private var draggingString: Int? = nil
+    @State private var dragStartPositions: [CGFloat] = Array(repeating: 0, count: 6)
     
     var body: some View {
         Group {
@@ -58,7 +61,7 @@ struct HandTrackingExperienceView: View {
                         let chordLabelX = manager.isRightHanded ? w * 0.06 : w * 0.94
                         
                         ForEach(
-                            [("SHARP", CGFloat(0.33)), ("NORMAL", CGFloat(0.50)), ("FLAT", CGFloat(0.66))],
+                            [("SHARP", CGFloat(0.33)), ("FLAT", CGFloat(0.66))],
                             id: \.0
                         ) { label, ratio in
                             Path { path in
@@ -66,7 +69,7 @@ struct HandTrackingExperienceView: View {
                                 path.addLine(to: CGPoint(x: chordEndX, y: h * ratio))
                             }
                             .stroke(
-                                Color("PrimaryBrown").opacity(label == "NORMAL" ? 0.35 : 0.65),
+                                Color("PrimaryBrown").opacity(0.65),
                                 style: StrokeStyle(lineWidth: 1, dash: [7, 5])
                             )
                             
@@ -91,15 +94,13 @@ struct HandTrackingExperienceView: View {
                         
                         let startX = manager.isRightHanded ? w * 0.52 : w * 0.05
                         let endX = manager.isRightHanded ? w * 0.95 : w * 0.48
-                        // Must match HandPoseManager's camera-space string
-                        // positions so the visual and detected plucks align.
-                        let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
                         let activeVoicing = manager.activeChord.voicing(for: manager.activeStrumType)
-                        
+
                         ForEach(0..<6) { i in
                             let stringY = stringYPositions[i] * h
                             let vibration = stringVibrations[i]
-                            
+                            let isDragging = draggingString == i
+
                             Path { path in
                                 path.move(to: CGPoint(x: startX, y: stringY))
                                 path.addQuadCurve(
@@ -108,11 +109,12 @@ struct HandTrackingExperienceView: View {
                                 )
                             }
                             .stroke(
-                                lastTriggeredStrings[i] ? Color("PrimaryBrown") : Color.white.opacity(0.6),
-                                lineWidth: lastTriggeredStrings[i] ? 4.0 : 1.5
+                                isDragging ? Color.yellow.opacity(0.9) :
+                                    (lastTriggeredStrings[i] ? Color("PrimaryBrown") : Color.white.opacity(0.6)),
+                                lineWidth: isDragging ? 3.0 : (lastTriggeredStrings[i] ? 4.0 : 1.5)
                             )
-                            .shadow(color: lastTriggeredStrings[i] ? .primaryBrown : .clear, radius: 8)
-                            
+                            .shadow(color: isDragging ? .yellow : (lastTriggeredStrings[i] ? .primaryBrown : .clear), radius: 8)
+
                             let textX = manager.isRightHanded ? w * 0.54 : w * 0.42
                             let noteLabel = activeVoicing[i]
                             if !noteLabel.isEmpty {
@@ -127,6 +129,31 @@ struct HandTrackingExperienceView: View {
                                     .cornerRadius(3)
                                     .position(x: textX, y: stringY - 8)
                             }
+
+                            Rectangle()
+                                .fill(Color.clear)
+                                .contentShape(Rectangle())
+                                .frame(width: endX - startX, height: 28)
+                                .position(x: (startX + endX) / 2, y: stringY)
+                                .gesture(
+                                    DragGesture(minimumDistance: 2)
+                                        .onChanged { value in
+                                            if draggingString != i {
+                                                dragStartPositions = stringYPositions
+                                                draggingString = i
+                                            }
+                                            let rawDelta = value.translation.height / h
+                                            let minDelta = dragStartPositions.map { 0.18 - $0 }.max()!
+                                            let maxDelta = dragStartPositions.map { 0.88 - $0 }.min()!
+                                            let clampedDelta = min(max(rawDelta, minDelta), maxDelta)
+                                            let newPositions = dragStartPositions.map { $0 + clampedDelta }
+                                            stringYPositions = newPositions
+                                            manager.stringYPositions = newPositions
+                                        }
+                                        .onEnded { _ in
+                                            draggingString = nil
+                                        }
+                                )
                         }
                     }
                     VStack {
