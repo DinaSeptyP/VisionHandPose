@@ -17,7 +17,7 @@ struct MainGuitarView: View {
 
     var body: some View {
         Group {
-            if manager.cameraPermissionGranted {
+//            if manager.cameraPermissionGranted {
                 ZStack {
                         Color.black.opacity(0.2)
                             .ignoresSafeArea()
@@ -171,10 +171,9 @@ struct MainGuitarView: View {
                             .padding(.bottom, 12)
                         }
                     }
-                    .ignoresSafeArea()
-            } else {
-                PermissionRequestView(manager: manager)
-            }
+//            } else {
+//                PermissionRequestView(manager: manager)
+//            }
         }
         .navigationBarBackButtonHidden(true)
         .onAppear {
@@ -186,7 +185,13 @@ struct MainGuitarView: View {
             manager.stopSession()
         }
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItem(placement: .principal) {
+                Text("StrumMe")
+                    .font(.custom("Playfair Display", size: 30))
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color("PrimaryDark"))
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Button(action: { manager.toggleHandedness() }) {
                     HStack {
                         Image(systemName: "hand.raised.fill")
@@ -196,23 +201,9 @@ struct MainGuitarView: View {
                     .foregroundStyle(Color("PrimaryBrown"))
                 }
             }
-            ToolbarItem(placement: .principal) {
-                Text("StrumMe")
-                    .font(.custom("Playfair Display", size: 30))
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color("PrimaryDark"))
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(value: "Guide") {
                     Text("\(Image(systemName: "info.circle"))")
-                        .foregroundStyle(Color("PrimaryBrown"))
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-
-                } label: {
-                    Text("\(Image(systemName: "gearshape"))")
                         .foregroundStyle(Color("PrimaryBrown"))
                 }
             }
