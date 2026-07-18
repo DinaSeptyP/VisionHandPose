@@ -8,42 +8,40 @@
 import SwiftUI
 
 struct GuideHeading: View {
-    @State var number: Int
-    @State var logo: String
-    @State var title: String
+    let number: Int
+    let logo: String
+    let title: String
     
     var body: some View {
-        VStack(alignment: .leading) {
-            VStack(alignment: .leading) {
-                Text("0\(number)")
-                    .font(.custom("Playfair Display", size: 180))
-                    .fontWeight(.black)
-                    .foregroundStyle(Color("PrimaryBrown").opacity(0.2))
-                Text("\(Image(systemName: "\(logo)"))")
-                    .font(.custom("Playfair Display", size: 40))
-                    .foregroundStyle(Color("PrimaryFont"))
-                    .padding(25)
-                    .background(Color("SecondaryFont").opacity(0.9))
-                    .cornerRadius(20)
-                    .padding(.top, -220)
-            }
-            .padding(.bottom, -100)
-            
-            VStack(alignment: .leading) {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("STEP 0\(number)")
+                    .font(.custom("Inter-Bold", size: 12, relativeTo: .caption))
+                    .foregroundStyle(Color("SecondaryFont"))
+                    .tracking(2)
+                
                 Text(title)
-                    .font(.custom("Playfair Display", size: 60))
-                    .fontWeight(.black)
+                    .font(.custom("Inter-Bold", size: 30, relativeTo: .title))
                     .foregroundStyle(Color("PrimaryBackground"))
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.bottom, 10)
             }
-            .frame(maxWidth: 600, alignment: .leading)
+            
+            Spacer()
+            
+            Image(systemName: logo)
+                .font(.system(size: 22))
+                .foregroundStyle(.white)
+                .padding(14)
+                .background(Color("SecondaryFont"))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
         }
+        .padding(.bottom, 16)
     }
 }
 
 #Preview {
-    GuideHeading(number: 1, logo: "guitars", title: "Apa kek")
+    ZStack {
+        Color("PrimaryFont").ignoresSafeArea()
+        GuideHeading(number: 3, logo: "music.note.list", title: "Chord Guides")
+            .padding()
+    }
 }
