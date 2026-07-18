@@ -32,6 +32,19 @@ struct HandTrackingExperienceView: View {
                         let w = geo.size.width
                         let h = geo.size.height
                         
+                        if let cHand = manager.chordHand {
+                            drawHandSkeleton(cHand, width: w, height: h, color: .primaryBrown)
+                        }
+                        
+                        if let sHand = manager.strumHand {
+                            drawHandSkeleton(sHand, width: w, height: h, color: .secondaryFont)
+                        }
+                    }.ignoresSafeArea()
+                    
+                    GeometryReader { geo in
+                        let w = geo.size.width
+                        let h = geo.size.height
+                        
                         Path { path in
                             path.move(to: CGPoint(x: w * 0.5, y: 0))
                             path.addLine(to: CGPoint(x: w * 0.5, y: h))
@@ -84,14 +97,6 @@ struct HandTrackingExperienceView: View {
                                 .background(Color.black.opacity(0.58))
                                 .clipShape(Capsule())
                                 .position(x: chordLabelX, y: h * ratio - 11)
-                        }
-                        
-                        if let cHand = manager.chordHand {
-                            drawHandSkeleton(cHand, width: w, height: h, color: .primaryBrown)
-                        }
-                        
-                        if let sHand = manager.strumHand {
-                            drawHandSkeleton(sHand, width: w, height: h, color: .secondaryFont)
                         }
                         
                         let startX = manager.isRightHanded ? w * 0.52 : w * 0.05
