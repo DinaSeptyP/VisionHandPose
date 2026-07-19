@@ -19,6 +19,9 @@ struct HandTrackingExperienceView: View {
     @State private var draggingCorner: Bool? = nil
     @State private var cornerDragStartPositions: [CGFloat] = Array(repeating: 0, count: 6)
     
+    var topContentInset: CGFloat = 0
+    var onStrumPositionChanged: () -> Void = {}
+    
     var body: some View {
         Group {
             if manager.cameraPermissionGranted {
@@ -62,13 +65,13 @@ struct HandTrackingExperienceView: View {
                             title: manager.isRightHanded ? "Chord" : "Strumming Pattern",
                             color: manager.isRightHanded ? Color("PrimaryBrown") : Color("SecondaryFont"),
                             x: w*0.25,
-                            y: 25
+                            y: 25 + topContentInset
                         )
                         ZoneLabelView(
                             title: manager.isRightHanded ? "Strumming Pattern" : "Chord",
                             color: manager.isRightHanded ? Color("SecondaryFont") : Color("PrimaryBrown"),
                             x: w*0.75,
-                            y:25
+                            y: 25 + topContentInset
                         )
                         
                         let chordStartX = manager.isRightHanded ? CGFloat(0) : w * 0.52
@@ -159,6 +162,7 @@ struct HandTrackingExperienceView: View {
                                         }
                                         .onEnded { _ in
                                             draggingString = nil
+                                            onStrumPositionChanged()
                                         }
                                 )
                         }
@@ -207,6 +211,7 @@ struct HandTrackingExperienceView: View {
                                         }
                                         .onEnded { _ in
                                             draggingCorner = nil
+                                            onStrumPositionChanged()
                                         }
                                 )
                         }
@@ -214,7 +219,7 @@ struct HandTrackingExperienceView: View {
                     VStack {
                         if manager.handScalePercent != nil || manager.handDistanceWarning != nil {
                             handReadabilityIndicator
-                                .padding(.top, 54)
+                                .padding(.top, 54 + topContentInset)
                         }
                         Spacer()
                     }
@@ -239,6 +244,9 @@ struct HandTrackingExperienceView: View {
             } else {
                 PermissionRequestView(manager: manager)
             }
+        }
+        .onAppear {
+            stringYPositions = manager.stringYPositions
         }
     }
     

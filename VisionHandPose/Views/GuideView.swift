@@ -21,6 +21,7 @@ struct GuideView: View {
     @State private var selectedPart: TutorialPart = .camera
     @StateObject private var manager = HandPoseManager()
     @ObservedObject var chordPlayer: ChordPlayer
+
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
@@ -133,12 +134,13 @@ struct GuideView: View {
                         ChordGuides()
                         
                     case .settings:
-                        GuideCard(
+                        CustomizeExperience(
                             number: 4,
                             logo: "gearshape",
                             title: selectedPart.rawValue,
-                            subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                            tip: "Lorem ipsum dolor sit amet"
+                            tip: "You can change these settings again later.",
+                            manager: manager,
+                            chordPlayer: chordPlayer
                         )
                     }
                 }
