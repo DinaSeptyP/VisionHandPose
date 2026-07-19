@@ -191,7 +191,7 @@ struct PlayView: View {
                     y: 28
                 )
 
-                // Accidental zone indicators (horizontal lines)
+                // NotesType zone indicators (horizontal lines)
                 if manager.isRightHanded {
                     // Sharp zone line (top third)
                     Path { path in
@@ -221,7 +221,7 @@ struct PlayView: View {
                         style: StrokeStyle(lineWidth: 2, dash: [6, 4])
                     )
 
-                    // Accidental labels
+                    // NotesType labels
                     Text("♯ SHARP")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundColor(.orange)
@@ -350,10 +350,10 @@ struct PlayView: View {
                             .foregroundColor(manager.activeChord != .none ? .cyan : .white.opacity(0.3))
 
                         if manager.activeChord != .none {
-                            Text(manager.activeAccidental.suffix)
+                            Text(manager.activeNotesType.suffix)
                                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                                .foregroundColor(manager.activeAccidental == .sharp ? .orange :
-                                                manager.activeAccidental == .flat ? .blue : .cyan)
+                                .foregroundColor(manager.activeNotesType == .sharp ? .orange :
+                                                manager.activeNotesType == .flat ? .blue : .cyan)
                         }
                     }
 

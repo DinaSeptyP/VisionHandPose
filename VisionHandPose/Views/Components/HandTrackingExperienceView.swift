@@ -13,6 +13,11 @@ struct HandTrackingExperienceView: View {
     @ObservedObject var chordPlayer: ChordPlayer
     @State private var stringVibrations: [CGFloat] = [0, 0, 0, 0, 0, 0]
     @State private var lastTriggeredStrings: [Bool] = [false, false, false, false, false, false]
+    @State private var stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+    @State private var draggingString: Int? = nil
+    @State private var dragStartPositions: [CGFloat] = Array(repeating: 0, count: 6)
+    @State private var draggingCorner: Bool? = nil
+    @State private var cornerDragStartPositions: [CGFloat] = Array(repeating: 0, count: 6)
     
     var body: some View {
         Group {
@@ -20,6 +25,19 @@ struct HandTrackingExperienceView: View {
                 ZStack {
                     CameraPreviewView(session: manager.session)
 //                        .ignoresSafeArea()
+                    
+                    GeometryReader { geo in
+                        let w = geo.size.width
+                        let h = geo.size.height
+                        
+                        if let cHand = manager.chordHand {
+                            drawHandSkeleton(cHand, width: w, height: h, color: .primaryBrown)
+                        }
+                        
+                        if let sHand = manager.strumHand {
+                            drawHandSkeleton(sHand, width: w, height: h, color: .secondaryFont)
+                        }
+                    }.ignoresSafeArea()
                     
                     GeometryReader { geo in
                         let w = geo.size.width
@@ -56,7 +74,7 @@ struct HandTrackingExperienceView: View {
                         let chordLabelX = manager.isRightHanded ? w * 0.06 : w * 0.94
                         
                         ForEach(
-                            [("SHARP", CGFloat(0.33)), ("NORMAL", CGFloat(0.50)), ("FLAT", CGFloat(0.66))],
+                            [("SHARP", CGFloat(0.33)), ("FLAT", CGFloat(0.66))],
                             id: \.0
                         ) { label, ratio in
                             Path { path in
@@ -64,7 +82,7 @@ struct HandTrackingExperienceView: View {
                                 path.addLine(to: CGPoint(x: chordEndX, y: h * ratio))
                             }
                             .stroke(
-                                Color("PrimaryBrown").opacity(label == "NORMAL" ? 0.35 : 0.65),
+                                Color("PrimaryBrown").opacity(0.65),
                                 style: StrokeStyle(lineWidth: 1, dash: [7, 5])
                             )
                             
@@ -79,25 +97,15 @@ struct HandTrackingExperienceView: View {
                                 .position(x: chordLabelX, y: h * ratio - 11)
                         }
                         
-                        if let cHand = manager.chordHand {
-                            drawHandSkeleton(cHand, width: w, height: h, color: .primaryBrown)
-                        }
-                        
-                        if let sHand = manager.strumHand {
-                            drawHandSkeleton(sHand, width: w, height: h, color: .secondaryFont)
-                        }
-                        
                         let startX = manager.isRightHanded ? w * 0.52 : w * 0.05
                         let endX = manager.isRightHanded ? w * 0.95 : w * 0.48
-                        // Must match HandPoseManager's camera-space string
-                        // positions so the visual and detected plucks align.
-                        let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
                         let activeVoicing = manager.activeChord.voicing(for: manager.activeStrumType)
-                        
+
                         ForEach(0..<6) { i in
                             let stringY = stringYPositions[i] * h
                             let vibration = stringVibrations[i]
-                            
+                            let isDragging = draggingString == i
+
                             Path { path in
                                 path.move(to: CGPoint(x: startX, y: stringY))
                                 path.addQuadCurve(
@@ -106,11 +114,12 @@ struct HandTrackingExperienceView: View {
                                 )
                             }
                             .stroke(
-                                lastTriggeredStrings[i] ? Color("PrimaryBrown") : Color.white.opacity(0.6),
-                                lineWidth: lastTriggeredStrings[i] ? 4.0 : 1.5
+                                isDragging ? Color.yellow.opacity(0.9) :
+                                    (lastTriggeredStrings[i] ? Color("PrimaryBrown") : Color.white.opacity(0.6)),
+                                lineWidth: isDragging ? 3.0 : (lastTriggeredStrings[i] ? 4.0 : 1.5)
                             )
-                            .shadow(color: lastTriggeredStrings[i] ? .primaryBrown : .clear, radius: 8)
-                            
+                            .shadow(color: isDragging ? .yellow : (lastTriggeredStrings[i] ? .primaryBrown : .clear), radius: 8)
+
                             let textX = manager.isRightHanded ? w * 0.54 : w * 0.42
                             let noteLabel = activeVoicing[i]
                             if !noteLabel.isEmpty {
@@ -125,6 +134,79 @@ struct HandTrackingExperienceView: View {
                                     .cornerRadius(3)
                                     .position(x: textX, y: stringY - 8)
                             }
+
+                            Rectangle()
+                                .fill(Color.clear)
+                                .contentShape(Rectangle())
+                                .frame(width: endX - startX, height: 28)
+                                .position(x: (startX + endX) / 2, y: stringY)
+                                .gesture(
+                                    DragGesture(minimumDistance: 2)
+                                        .onChanged { value in
+                                            if draggingString != i {
+                                                dragStartPositions = stringYPositions
+                                                draggingString = i
+                                            }
+                                            let rawDelta = value.translation.height / h
+                                            let minDelta = dragStartPositions.map { 0.18 - $0 }.max()!
+                                            let maxDelta = dragStartPositions.map { 0.88 - $0 }.min()!
+                                            let clampedDelta = min(max(rawDelta, minDelta), maxDelta)
+                                            let newPositions = dragStartPositions.map { $0 + clampedDelta }
+                                            stringYPositions = newPositions
+                                            manager.stringYPositions = newPositions
+                                        }
+                                        .onEnded { _ in
+                                            draggingString = nil
+                                        }
+                                )
+                        }
+
+                        let topHandleY = stringYPositions.first! * h
+                        let bottomHandleY = stringYPositions.last! * h
+                        let handleX = manager.isRightHanded ? endX - 12 : startX + 12
+
+                        ForEach([true, false], id: \.self) { isTop in
+                            let handleY = isTop ? topHandleY : bottomHandleY
+                            let isActive = draggingCorner == isTop
+
+                            Circle()
+                                .fill(isActive ? Color.yellow : Color.white.opacity(0.75))
+                                .frame(width: 28, height: 28)
+                                .contentShape(Circle())
+                                .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 1.5))
+                                .shadow(color: isActive ? .yellow : .clear, radius: 6)
+                                .position(x: handleX, y: handleY)
+                                .gesture(
+                                    DragGesture(minimumDistance: 2)
+                                        .onChanged { value in
+                                            if draggingCorner != isTop {
+                                                cornerDragStartPositions = stringYPositions
+                                                draggingCorner = isTop
+                                            }
+                                            let delta = value.translation.height / h
+                                            let minSpan: CGFloat = 0.10
+                                            let anchor = isTop
+                                                ? cornerDragStartPositions[5]
+                                                : cornerDragStartPositions[0]
+                                            let rawEdge = (isTop
+                                                ? cornerDragStartPositions[0]
+                                                : cornerDragStartPositions[5]) + delta
+                                            let movingEdge = isTop
+                                                ? min(max(rawEdge, 0.18), anchor - minSpan)
+                                                : max(min(rawEdge, 0.88), anchor + minSpan)
+                                            let newPositions = (0..<6).map { i in
+                                                let t = CGFloat(i) / 5.0
+                                                return isTop
+                                                    ? movingEdge + (anchor - movingEdge) * t
+                                                    : anchor + (movingEdge - anchor) * t
+                                            }
+                                            stringYPositions = newPositions
+                                            manager.stringYPositions = newPositions
+                                        }
+                                        .onEnded { _ in
+                                            draggingCorner = nil
+                                        }
+                                )
                         }
                     }
                     VStack {
@@ -138,34 +220,15 @@ struct HandTrackingExperienceView: View {
                         Spacer()
                         HStack(alignment: .bottom, spacing: 20) {
                             if manager.isRightHanded {
-                                chordSummaryCard
-                                Spacer(minLength: 24)
-                                strumPatternCard
+                                Spacer()
+                                ChordResultCard(manager: manager)
                             } else {
-                                strumPatternCard
-                                Spacer(minLength: 24)
-                                chordSummaryCard
+                                ChordResultCard(manager: manager)
+                                Spacer()
                             }
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 58)
-                    }
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Circle()
-                                .fill(manager.chordHand != nil ? Color.green : Color.red)
-                                .frame(width: 6, height: 6)
-                            Text(manager.statusMessage)
-                                .font(.custom("Playfair Display", size: 15))
-                                .fontDesign(.monospaced)
-                                .foregroundColor(Color("PrimaryFont"))
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color("PrimaryDark").opacity(0.7))
-                        .clipShape(Capsule())
-                        .padding(.bottom, 12)
                     }
                 }
                 .onReceive(manager.stringPluckedSubject) { stringIndex in
@@ -242,11 +305,11 @@ struct HandTrackingExperienceView: View {
     
     private var strumPatternCard: some View {
         VStack(alignment: .trailing, spacing: 7) {
-            Text("STRUMMING PATTERN")
-                .font(.custom("Inter", size: 11))
-                .fontWeight(.bold)
-                .tracking(1.2)
-                .foregroundStyle(cardSecondaryForeground)
+//            Text("STRUMMING PATTERN")
+//                .font(.custom("Inter", size: 11))
+//                .fontWeight(.bold)
+//                .tracking(1.2)
+//                .foregroundStyle(cardSecondaryForeground)
 
             HStack(spacing: 8) {
                 Image(systemName: manager.isStrumTypeLocked ? "lock.fill" : "hand.raised.fill")
@@ -324,32 +387,6 @@ struct HandTrackingExperienceView: View {
     private var handReadabilityColor: Color {
         if manager.handDistanceWarning != nil { return .orange }
         return handReadabilityIsIdeal ? .green : .yellow
-    }
-
-    
-
-    private var accidentalTitle: String {
-        switch manager.activeAccidental {
-        case .sharp: return "SHARP"
-        case .natural: return "NORMAL"
-        case .flat: return "FLAT"
-        }
-    }
-
-    private var accidentalIcon: String {
-        switch manager.activeAccidental {
-        case .sharp: return "number"
-        case .natural: return "music.note"
-        case .flat: return "music.note"
-        }
-    }
-
-    private var accidentalColor: Color {
-        switch manager.activeAccidental {
-        case .sharp: return .orange
-        case .natural: return Color("SecondaryFont")
-        case .flat: return .blue
-        }
     }
     
     private var panelBackground: Color {

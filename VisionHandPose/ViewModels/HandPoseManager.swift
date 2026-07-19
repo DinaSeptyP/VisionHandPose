@@ -63,7 +63,7 @@ enum MusicalChord: String {
     case am = "Am"
     case bm = "Bm"
 
-    var accidentalSuffix: String {
+    var NotesTypeSuffix: String {
         ""
     }
 
@@ -140,56 +140,128 @@ enum MusicalChord: String {
     }
     
     // ADA YANG DI GANTI
+//    func voicing(for type: StrumChordType) -> [String] {
+//        switch (self, type) {
+//        // C chord variants
+//        case (.c, .chordnormal):
+//            return ["E3", "C", "E", "G", "C5", "E5"]
+//        case (.c, .chord7):
+//            return ["E3", "C", "E", "G", "B", "C5"]
+//        case (.cm, .chordnormal):
+//            return ["E3", "C", "Eb", "G", "C5", "Eb5"]
+//        case (.cm, .chord7):
+//            return ["E3", "C", "Eb", "G", "Bb", "Eb5"]
+//        // D chord variants
+//        case (.d, .chordnormal):
+//            return ["D3", "A3", "D", "F#", "A", "D5"]
+//        case (.d, .chord7):
+//            return ["D3", "A3", "D", "F#", "A", "C#5"]
+//        case (.dm, .chordnormal):
+//            return ["D3", "A3", "D", "F", "A", "D5"]
+//        case (.dm, .chord7):
+//            return ["D3", "A3", "D", "F", "C", "A"]
+//        // E chord variants
+//        case (.e, .chordnormal):
+//            return ["E3", "B3", "E", "G", "B", "E5"]
+//        case (.e, .chord7):
+//            return ["E3", "B3", "E", "G", "D", "B"]
+//        case (.em, .chordnormal):
+//            return ["E3", "B3", "E", "G", "B", "E5"]
+//        case (.em, .chord7):
+//            return ["E3", "B3", "E", "G", "D", "E5"]
+//        // F chord variants
+//        case (.f, .chordnormal):
+//            return ["F3", "C", "F", "A", "C5", "F5"]
+//        case (.f, .chord7):
+//            return ["F3", "C", "F", "A", "E", "C5"]
+//        case (.fm, .chordnormal):
+//            return ["F3", "C", "F", "Ab", "C5", "Eb5"]
+//        case (.fm, .chord7):
+//            return ["F3", "C", "F", "Ab", "Eb", "C5"]
+//        // G chord variants
+//        case (.g, .chordnormal):
+//            return ["G3", "B3", "D", "G", "B", "G5"]
+//        case (.g, .chord7):
+//            return ["G3", "B3", "D", "F#", "A", "B"]
+//        case (.gm, .chordnormal):
+//            return ["G3", "D", "G", "A#", "D", "G5"]
+//        case (.gm, .chord7):
+//            return ["G3", "B3", "D", "F", "Eb", "B"]
+//        // A chord variants
+//        case (.a, .chordnormal):
+//            return ["E3", "A3", "E", "A", "C#5", "E5"]
+//        case (.a, .chord7):
+//            return ["E3", "A3", "E", "G#", "A", "C#5"]
+//        case (.am, .chordnormal):
+//            return ["E3", "A3", "E", "A", "C5", "E5"]
+//        case (.am, .chord7):
+//            return ["E3", "A3", "E", "G", "C", "A"]
+//        // B chord variants
+//        case (.b, .chordnormal):
+//            return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
+//        case (.b, .chord7):
+//            return ["F#3", "B3", "F#", "A#", "D#", "F#5"]
+//        case (.bm, .chordnormal):
+//            return ["F#3", "B3", "F#", "A", "D#5", "F#5"]
+//        case (.bm, .chord7):
+//            return ["F#3", "B3", "F#", "A", "D", "F#5"]
+//        // none or unrecognized combinations
+//        default:
+//            return ["E3", "A3", "D", "G", "B", "E5"]
+//        }
+//    }
+    
+    //versi dylan
     func voicing(for type: StrumChordType) -> [String] {
         switch (self, type) {
         // C chord variants
         case (.c, .chordnormal):
-            return ["E3", "C", "E", "G", "C5", "E5"]
+            return ["G2", "C3", "E3", "G3", "C4", "E4"]
         case (.c, .chord7):
-            return ["E3", "C", "E", "G", "B", "C5"]
+            return ["G2", "C3", "E3", "G3", "B3", "E4"]
         case (.cm, .chordnormal):
             return ["E3", "C", "Eb", "G", "C5", "Eb5"]
         case (.cm, .chord7):
             return ["E3", "C", "Eb", "G", "Bb", "Eb5"]
         // D chord variants
         case (.d, .chordnormal):
-            return ["D3", "A3", "D", "F#", "A", "D5"]
+            return ["F#2", "A2", "D3", "A3", "D4", "F#4"]
         case (.d, .chord7):
-            return ["D3", "A3", "D", "F#", "A", "C#5"]
+            return ["F#2", "A2", "D3", "A3", "C#4", "F#4"]
         case (.dm, .chordnormal):
             return ["D3", "A3", "D", "F", "A", "D5"]
         case (.dm, .chord7):
             return ["D3", "A3", "D", "F", "C", "A"]
         // E chord variants
         case (.e, .chordnormal):
-            return ["E3", "B3", "E", "G#", "B", "E5"]
+            return ["E2", "B2", "E3", "G#3", "B3", "E4"]
         case (.e, .chord7):
-            return ["E3", "B3", "E", "G#", "D", "B"]
+            return ["E2", "B2", "D#3", "G#3", "B3", "E4"]
         case (.em, .chordnormal):
             return ["E3", "B3", "E", "G", "B", "E5"]
         case (.em, .chord7):
             return ["E3", "B3", "E", "G", "D", "E5"]
         // F chord variants
         case (.f, .chordnormal):
-            return ["F3", "C", "F", "A", "C5", "F5"]
+            return ["F2", "C3", "F3", "A3", "C4", "F4"]
         case (.f, .chord7):
-            return ["F3", "C", "F", "A", "E", "C5"]
+            return ["F2", "C3", "F3", "A3", "C4", "E4"]
         case (.fm, .chordnormal):
             return ["F3", "C", "F", "Ab", "C5", "Eb5"]
         case (.fm, .chord7):
             return ["F3", "C", "F", "Ab", "Eb", "C5"]
         // G chord variants
         case (.g, .chordnormal):
-            return ["G3", "B3", "D", "G", "B", "G5"]
+            return ["G2", "B2", "D3", "G3", "B3", "G4"]
         case (.g, .chord7):
-            return ["G3", "B3", "D", "F#", "A", "B"]
+            return ["G2", "B2", "D3", "G3", "B3", "F#4"]
         case (.gm, .chordnormal):
             return ["G3", "D", "G", "A#", "D", "G5"]
         case (.gm, .chord7):
             return ["G3", "B3", "D", "F", "Eb", "B"]
         // A chord variants
         case (.a, .chordnormal):
-            return ["E3", "A3", "E", "A", "C#5", "E5"]
+            return ["E2", "A2", "E3", "A3", "C#4", "E4"]
         case (.a, .chord7):
             return ["E3", "A3", "E", "G#", "A", "C#5"]
         case (.am, .chordnormal):
@@ -198,7 +270,7 @@ enum MusicalChord: String {
             return ["E3", "A3", "E", "G", "C", "A"]
         // B chord variants
         case (.b, .chordnormal):
-            return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
+            return ["F#2", "B2", "F#3", "B3", "D#4", "F#4"]
         case (.b, .chord7):
             return ["F#3", "B3", "F#", "A#", "D#", "F#5"]
         case (.bm, .chordnormal):
@@ -207,16 +279,16 @@ enum MusicalChord: String {
             return ["F#3", "B3", "F#", "A", "D", "F#5"]
         // none or unrecognized combinations
         default:
-            return ["", "", "", "", "", ""]
+            return ["E3", "A3", "D", "G", "B", "E5"]
         }
     }
 }
 
-// Accidental type based on vertical position
-enum Accidental {
-    case sharp   // Top of frame (y < 0.33)
+// NotesType type based on vertical position
+enum NotesType {
+    case sharp  // Top of frame (y < 0.33)
     case natural // Middle of frame (0.33 <= y <= 0.66)
-    case flat    // Bottom of frame (y > 0.66)
+    case flat   // Bottom of frame (y > 0.66)
 
     var suffix: String {
         switch self {
@@ -226,7 +298,7 @@ enum Accidental {
         }
     }
 
-    static func from(y: CGFloat) -> Accidental {
+    static func from(y: CGFloat) -> NotesType {
         if y < 0.33 {
             return .sharp
         } else if y > 0.66 {
@@ -320,7 +392,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
     // Guitar specific state
     @Published var activeChord: MusicalChord = .none
-    @Published var activeAccidental: Accidental = .natural
+    @Published var activeNotesType: NotesType = .natural
     @Published var activeStrumType: StrumChordType = .none
     @Published var isRightHanded: Bool = true // Left side = Chord, Right side = Strum
     @Published var chordHand: HandPose? = nil
@@ -336,7 +408,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     private var pendingChord: MusicalChord = .none
     private var pendingChordFrameCount = 0
     private var missingChordHandFrameCount = 0
-    private var stableStrumType: StrumChordType = .none
+    private var stableStrumType: StrumChordType = .chordnormal
     private var pendingStrumType: StrumChordType = .none
     private var pendingStrumTypeFrameCount = 0
 
@@ -356,7 +428,12 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
     nonisolated(unsafe) private var lastStrumPinchRatio: CGFloat? = nil
     nonisolated(unsafe) private var stringsInsideKnuckleBand: Set<Int> = []
     nonisolated(unsafe) private var strumTypeIsLockedForCapture = false
-    private let stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+    private let stringPositionsLock = NSLock()
+    private var _stringYPositions: [CGFloat] = [0.35, 0.41, 0.47, 0.53, 0.59, 0.65]
+    var stringYPositions: [CGFloat] {
+        get { stringPositionsLock.withLock { _stringYPositions } }
+        set { stringPositionsLock.withLock { _stringYPositions = newValue } }
+    }
     private let knuckleHitBand: CGFloat = 0.014
     private let debounceInterval: TimeInterval = 0.07 // responsive repeated picking without double-trigger noise
     // A natural "pick" pinch often leaves a small visible gap on camera.
@@ -745,15 +822,16 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
 
                 if strumTypeIsLockedForCapture {
                     let currentPickPoint = indexDIP.location
+                    let positions = stringYPositions
                     let currentlyInsideBand = Set(
-                        stringYPositions.indices.filter {
-                            abs(currentPickPoint.y - stringYPositions[$0]) <= knuckleHitBand
+                        positions.indices.filter {
+                            abs(currentPickPoint.y - positions[$0]) <= knuckleHitBand
                         }
                     )
 
                     if let previousPickPoint = lastPickPoint {
-                        for i in 0..<stringYPositions.count {
-                            let stringY = stringYPositions[i]
+                        for i in 0..<positions.count {
+                            let stringY = positions[i]
 
                             let crossed = (previousPickPoint.y - stringY)
                                 * (currentPickPoint.y - stringY) <= 0
@@ -846,7 +924,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                 self.activeChord = displayedChord
                 self.activeStrumType = displayedStrumType
                 if let centerY = handCenterYForUI {
-                    self.activeAccidental = Accidental.from(y: centerY)
+                    self.activeNotesType = NotesType.from(y: centerY)
                 }
 
                 var handsList: [HandPose] = []
@@ -860,11 +938,11 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
                 if chordHandForUI == nil && strumHandForUI == nil {
                     self.statusMessage = "No hands detected. Left side = Chord, Right side = Strum."
                 } else if chordHandForUI != nil && strumHandForUI == nil {
-                    self.statusMessage = "Chord hand active (\(displayedChord.rawValue)\(self.activeAccidental.suffix)). Raise strum hand on right."
+                    self.statusMessage = "Chord hand active (\(displayedChord.rawValue)\(self.activeNotesType.suffix)). Raise strum hand on right."
                 } else if chordHandForUI == nil && strumHandForUI != nil {
                     self.statusMessage = "Strum hand active. Raise chord hand on left."
                 } else {
-                    self.statusMessage = "Guitar ready! \(displayedChord.rawValue)\(self.activeAccidental.suffix) \(displayedStrumType.rawValue)"
+                    self.statusMessage = "Guitar ready! \(displayedChord.rawValue)\(self.activeNotesType.suffix) \(displayedStrumType.rawValue)"
                 }
             }
             
@@ -1043,12 +1121,12 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         default: return .none
         }
 
-        // Apply accidental based on hand center Y position (middle of palm)
-        let accidental = Accidental.from(y: handCenterY ?? 0.5)
+        // Apply NotesType based on hand center Y position (middle of palm)
+        let NotesType = NotesType.from(y: handCenterY ?? 0.5)
 
         // For sharp zone, shift note up (e.g., C becomes C# = D♭)
         // For flat zone, shift note down conceptually, but we'll display as flat suffix
-        switch accidental {
+        switch NotesType {
         case .sharp:
             return baseNote
         case .natural:

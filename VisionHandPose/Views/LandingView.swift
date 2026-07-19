@@ -9,12 +9,12 @@ import SwiftUI
 
 struct LandingView: View {
     let strings: [CGFloat] = [
-        0.3,
-        0.4,
-        0.5,
-        0.6,
-        0.7,
-        0.8
+        0.25,
+        0.35,
+        0.45,
+        0.55,
+        0.65,
+        0.75
     ]
 
     @State private var path = NavigationPath()
@@ -25,6 +25,29 @@ struct LandingView: View {
         NavigationStack(path: $path) {
             ZStack {
                 Color("PrimaryBackground").ignoresSafeArea()
+                
+                ZStack {
+
+                    Image("GuitarBg")
+                        .resizable()
+                        .scaledToFill()
+                        .ignoresSafeArea()
+
+                    RadialGradient(
+                        colors: [
+                            Color(
+                                red: 200/255,
+                                green: 148/255,
+                                blue: 58/255
+                            )
+                            .opacity(0.08),
+                            .clear
+                        ],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 500
+                    )
+                }
                 NoiseView()
                 ForEach(strings.indices, id: \.self) { index in
                     GuitarString(
@@ -49,21 +72,7 @@ struct LandingView: View {
                         value: vibrate
                     )
                 }
-
-                RadialGradient(
-                    colors: [
-                        Color(
-                            red: 200/255,
-                            green: 148/255,
-                            blue: 58/255
-                        ).opacity(0.18),
-                        .clear
-                    ],
-                    center: .center,
-                    startRadius: 0,
-                    endRadius: 500
-                )
-
+                
                 VStack {
                     ZStack {
                         Image("Logo")
@@ -77,40 +86,57 @@ struct LandingView: View {
                             .fontWeight(.black)
                             .foregroundStyle(Color("PrimaryFont"))
                         Text("Where your hand become guitar")
-                            .font(.custom("Playfair Display", size: 25))
+                            .font(.custom("Playfair Display", size: 28, relativeTo: .title))
                             .fontWeight(.regular)
                             .foregroundStyle(Color("SecondaryFont"))
                     }
                     .padding(.bottom, 50)
-
-
-                    NavigationLink(value: "MainGuitar") {
-                        HStack {
-                            Text("\(Image(systemName: "hand.tap"))")
-                                .foregroundStyle(Color("PrimaryFont"))
-                                .font(Font.custom("Inter", size: 30))
-                                .padding(.trailing, 30)
-                            Text("Begin Playing")
-                                .font(.custom("Inter", size: 30))
-                                .fontWeight(.medium)
-                                .foregroundStyle(Color("PrimaryFont"))
-                            Spacer()
-                            Text("\(Image(systemName: "chevron.right"))")
-                                .foregroundStyle(Color("PrimaryFont"))
-                                .font(Font.custom("Inter", size: 30))
+                    
+                    HStack{
+                        NavigationLink(value: "MainGuitar") {
+                            HStack {
+                                Text("\(Image(systemName: "hand.tap"))")
+                                    .foregroundStyle(Color("PrimaryFont"))
+                                    .font(Font.custom("Inter", size: 30))
+                                    .padding(.trailing, 30)
+                                Text("Begin Playing")
+                                    .font(.custom("Inter", size: 30))
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(Color("PrimaryFont"))
+                            }
+                            .padding(.vertical, 30)
+                            .padding(.horizontal, 100)
+                            .background(Color("SecondaryFont"))
+                            .clipShape(Capsule())
+                            .frame(maxWidth: 500)
                         }
-                        .padding(.vertical, 30)
-                        .padding(.horizontal, 100)
-                        .background(Color("SecondaryFont"))
-                        .cornerRadius(15)
-                        .frame(maxWidth: 500)
+                        NavigationLink(value: "Guide") {
+                            HStack {
+                                Text("\(Image(systemName: "info.circle"))")
+                                    .foregroundStyle(Color("SecondaryFont"))
+                                    .font(Font.custom("Inter", size: 30))
+                                    .padding(.trailing, 30)
+                                Text("View Guide")
+                                    .font(.custom("Inter", size: 30))
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(Color("SecondaryFont"))
+                            }
+                            .padding(.vertical, 30)
+                            .padding(.horizontal, 100)
+                            .background(Color("PrimaryFont"))
+                            .clipShape(Capsule())
+                            .frame(maxWidth: 500)
+                        }
                     }
                 }
             }
-            .onAppear {
-                animate = true
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now()) {
+                    animate = true
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                     vibrate = true
                 }
             }
