@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct GuideTipCard: View {
-    @State var tip: String
+    let tip: String
+
     var body: some View {
         HStack {
             Text("\(Image(systemName: "lightbulb.max"))")
