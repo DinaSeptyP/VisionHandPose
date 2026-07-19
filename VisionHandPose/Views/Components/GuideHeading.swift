@@ -20,30 +20,30 @@ struct GuideHeading: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-                    ZStack(alignment: .leading) {
-                        Text("0\(number)")
-                            .font(.custom("Playfair Display",size: 120))
-                            .fontWeight(.black)
-                            .foregroundStyle(Color("PrimaryBrown").opacity(0.15))
-
-                        Image(systemName: logo)
-                            .font(.system(size: 32))
-                            .foregroundStyle(.white)
-                            .padding(20)
-                            .background(Color("SecondaryFont"))
-                            .clipShape(RoundedRectangle(cornerRadius: 18))
-                            .offset(x: -0, y: 60)
-                    }
-
-                    Text(title)
-                        .font(.custom("Playfair Display",size: 54))
-                        .fontWeight(.black)
-                        .foregroundStyle(Color("PrimaryBackground"))
-
-                    Text(subtitle)
+            ZStack(alignment: .leading) {
+                Text("0\(number)")
+                    .font(.custom("Playfair Display",size: numberSize))
+                    .fontWeight(.black)
+                    .foregroundStyle(Color("PrimaryBrown").opacity(0.15))
+                
+                Image(systemName: logo)
+                    .font(.system(size: iconSize))
+                    .foregroundStyle(.white)
+                    .padding(20)
+                    .background(Color("SecondaryFont"))
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .offset(x: -0, y: 60)
+            }
+            
+            Text(title)
+                .font(.custom("Playfair Display",size: titleSize))
+                .fontWeight(.black)
+                .foregroundStyle(Color("PrimaryBackground"))
+            
+            Text(subtitle)
                 .font(.custom("Inter", size: subtitleSize))
-                        .foregroundStyle(Color("PrimaryBackground"))
-                }
+                .foregroundStyle(Color("PrimaryBackground"))
+        }
     }
 }
 

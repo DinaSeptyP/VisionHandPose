@@ -24,8 +24,16 @@ struct GuideView: View {
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
+            let panelWidth = 0.4 * w
+            let panelHeight = geo.size.height
             
-            
+            let eyebrowSize = min(panelWidth * 0.028, 13)
+            let titleSize = min(panelWidth * 0.16, 75)
+            let backButtonSize = min(panelWidth * 0.085, 40)
+            let itemNumberSize = min(panelWidth * 0.055, 25)
+            let itemLabelSize = min(panelWidth * 0.055, 25)
+            let itemVPadding = min(panelHeight * 0.028, 30)
+            let sidePadding = min(panelWidth * 0.065, 30)
             
             HStack {
                 ZStack {
@@ -33,44 +41,87 @@ struct GuideView: View {
                         .ignoresSafeArea()
                     
                     VStack(alignment: .leading) {
+                        
+                        HStack {
+                            Button {
+                                if !path.isEmpty {
+                                    path.removeLast()
+                                }
+                            } label: {
+                                Image(systemName: "chevron.left")
+                                    .font(
+                                        .system(
+                                            size: backButtonSize * 0.32,
+                                            weight: .semibold
+                                        )
+                                    )
+                                    .foregroundStyle(Color("PrimaryFont"))
+                                    .frame(
+                                        width: backButtonSize,
+                                        height: backButtonSize
+                                    )
+                                    .background(Color("PrimaryFont").opacity(0.08))
+                                    .clipShape(Circle())
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, sidePadding)
+                        //                        .padding(.top, 12)
+                        
                         VStack(alignment: .leading) {
                             Text("G E T T I N G   S T A R T E D")
-                                .font(.custom("Inter", size: 13))
+                                .font(.custom("Inter", size: eyebrowSize))
                                 .fontWeight(.medium)
                                 .foregroundStyle(Color("SecondaryFont"))
                             
                             Text("How to")
-                                .font(.custom("Playfair Display", size: 75))
+                                .font(
+                                    .custom("Playfair Display", size: titleSize)
+                                )
                                 .fontWeight(.black)
                                 .foregroundStyle(Color("PrimaryFont"))
                             Text("Play")
-                                .font(.custom("Playfair Display", size: 75))
+                                .font(
+                                    .custom("Playfair Display", size: titleSize)
+                                )
                                 .italic()
                                 .fontWeight(.black)
                                 .foregroundStyle(Color("PrimaryFont"))
                         }
-                        .padding(.leading, 30)
+                        .padding(.leading, sidePadding)
                         
                         VStack(alignment: .leading) {
-                            ForEach(Array(TutorialPart.allCases.enumerated()), id: \.element) { index, part in
+                            ForEach(Array(TutorialPart.allCases.enumerated()), id: \.element) {
+ index,
+ part in
                                 Button {
                                     selectedPart = part
                                 } label: {
                                     HStack {
                                         Text("0\(index+1)")
-                                            .font(.custom("Playfair Display", size: 25))
+                                            .font(
+                                                .custom(
+                                                    "Playfair Display",
+                                                    size: itemNumberSize
+                                                )
+                                            )
                                             .fontWeight(.bold)
-                                            .padding(.trailing, 30)
+                                            .padding(.trailing, sidePadding)
                                             .padding(.top, -5)
-                                            .padding(.leading, 30)
+                                            .padding(.leading, sidePadding)
                                         Text(part.rawValue)
-                                            .font(.custom("Inter", size: 25))
+                                            .font(
+                                                .custom(
+                                                    "Inter",
+                                                    size: itemLabelSize
+                                                )
+                                            )
                                             .fontWeight(.medium)
                                     }
                                     .foregroundStyle(
                                         selectedPart == part ? Color("PrimaryFont") : Color("PrimaryFont").opacity(0.3)
                                     )
-                                    .padding(.vertical, 30)
+                                    .padding(.vertical, itemVPadding)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .background {
                                         if selectedPart == part {
@@ -96,7 +147,7 @@ struct GuideView: View {
                         }
                     }
                 }
-                .frame(width: 0.4*w)
+                .frame(width: panelWidth)
                 
                 ZStack {
                     Color("PrimaryFont")
@@ -148,6 +199,8 @@ struct GuideView: View {
                 .onDisappear { manager.stopSession() }
             }
         }
+        .navigationBarBackButtonHidden(true)
+        //        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
