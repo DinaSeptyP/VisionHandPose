@@ -9,33 +9,37 @@ import SwiftUI
 
 struct ChordCard: View {
     let chord: String
+    
     var body: some View {
         VStack(spacing: 12) {
             Image("Hand-\(chord)")
                 .resizable()
                 .scaledToFit()
-                .cornerRadius(12)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .frame(maxHeight: 150)
             
             Text(chord)
-                .font(.custom("Playfair Display", size: 25))
-                .fontWeight(.bold)
+                .font(.custom("Inter-Bold", size: 20, relativeTo: .headline))
                 .foregroundStyle(Color("PrimaryBackground"))
         }
         .frame(maxWidth: .infinity)
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color("PrimaryBrown").opacity(0.1))
+                .fill(Color("PrimaryBrown").opacity(0.08))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Color("PrimaryBackground").opacity(0.3), lineWidth: 2)
+                .stroke(Color("PrimaryBackground").opacity(0.15), lineWidth: 1.5)
         )
-        .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+        .shadow(color: .black.opacity(0.04), radius: 6, y: 3)
     }
 }
 
 #Preview {
-    ChordCard(chord: "C")
+    ZStack {
+        Color("PrimaryFont").ignoresSafeArea()
+        ChordCard(chord: "C")
+            .padding()
+    }
 }

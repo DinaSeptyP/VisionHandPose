@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+// Wrapper - GuideCard design & live CameraPreview view
 struct CameraGuideCard: View {
     
     let number: Int
@@ -18,34 +19,15 @@ struct CameraGuideCard: View {
     @ObservedObject var manager: HandPoseManager
     
     var body: some View {
-        GeometryReader { geo in
-            let width = geo.size.width
-            let height = geo.size.height
-            
-            let titleSize = min(width * 0.07, 54)
-            let numberSize = min(width * 0.15, 120)
-            let iconSize = min(width * 0.045, 32)
-            let subtitleSize = min(width * 0.03, 22)
-            
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    GuideHeading(
-                        number: number,
-                        logo: logo,
-                        title: title,
-                        subtitle: subtitle,
-                        titleSize: titleSize,
-                        numberSize: numberSize,
-                        iconSize: iconSize,
-                        subtitleSize: subtitleSize
-                    )
-                    cameraSection
-                        .frame(height: min(height * 0.42, 490))
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                    tipSection
-                    Spacer(minLength: 0)
-                }
-                .padding(32)
+        ScrollView {
+            GuideCard(
+                number: number,
+                logo: logo,
+                title: title,
+                subtitle: subtitle,
+                tip: tip
+            ) {
+                cameraSection
             }
             .background(Color("PrimaryFont"))
         }
@@ -58,8 +40,8 @@ extension CameraGuideCard {
             if manager.cameraPermissionGranted {
                 CameraPreviewView(session: manager.session)
             } else {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.black.opacity(0.08))
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.black.opacity(0.04))
                     .overlay {
                         PermissionRequestView(manager: manager)
                     }
@@ -81,7 +63,8 @@ extension CameraGuideCard {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color("SecondaryFont"),lineWidth: 0.5)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .frame(height: 380)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 }
 
@@ -89,10 +72,10 @@ extension CameraGuideCard {
     
     CameraGuideCard(
         number: 1,
-        logo: "guitars",
-        title: "Open Camera View",
-        subtitle: "Allow permission to access your camera.",
-        tip: "Make sure your hands are visible to the camera.",
+        logo: "camera.fill",
+        title: "Camera Verification",
+        subtitle: "Allow front camera access to enable real-time hand gesture tracking.",
+        tip: "Ensure your hands are fully visible and well-lit.",
         manager: HandPoseManager()
     )
 }

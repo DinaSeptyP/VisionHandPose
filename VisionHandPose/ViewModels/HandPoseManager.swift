@@ -216,70 +216,70 @@ enum MusicalChord: String {
         switch (self, type) {
         // C chord variants
         case (.c, .chordnormal):
-            return ["G2", "C3", "E3", "G3", "C4", "E4"]
+            return ["E2", "C3", "E3", "G3", "C4", "E4"]
         case (.c, .chord7):
-            return ["G2", "C3", "E3", "G3", "B3", "E4"]
+            return ["E2", "C3", "E3", "G3", "B3", "E4"]
         case (.cm, .chordnormal):
-            return ["E3", "C", "Eb", "G", "C5", "Eb5"]
+            return ["E2", "C3", "G3", "C4", "D#4", "G4"]
         case (.cm, .chord7):
-            return ["E3", "C", "Eb", "G", "Bb", "Eb5"]
+            return ["E2", "C3", "G3", "A#3", "D#4", "G4"]
         // D chord variants
         case (.d, .chordnormal):
             return ["F#2", "A2", "D3", "A3", "D4", "F#4"]
         case (.d, .chord7):
             return ["F#2", "A2", "D3", "A3", "C#4", "F#4"]
         case (.dm, .chordnormal):
-            return ["D3", "A3", "D", "F", "A", "D5"]
+            return ["F#2", "A2", "D3", "A3", "D4", "F4"]
         case (.dm, .chord7):
-            return ["D3", "A3", "D", "F", "C", "A"]
+            return ["F#2", "A2", "D3", "A3", "C4", "F4"]
         // E chord variants
         case (.e, .chordnormal):
             return ["E2", "B2", "E3", "G#3", "B3", "E4"]
         case (.e, .chord7):
             return ["E2", "B2", "D#3", "G#3", "B3", "E4"]
         case (.em, .chordnormal):
-            return ["E3", "B3", "E", "G", "B", "E5"]
+            return ["E2", "B2", "E3", "G3", "B3", "E4"]
         case (.em, .chord7):
-            return ["E3", "B3", "E", "G", "D", "E5"]
+            return ["E2", "B2", "D3", "G3", "B3", "E4"]
         // F chord variants
         case (.f, .chordnormal):
             return ["F2", "C3", "F3", "A3", "C4", "F4"]
         case (.f, .chord7):
             return ["F2", "C3", "F3", "A3", "C4", "E4"]
         case (.fm, .chordnormal):
-            return ["F3", "C", "F", "Ab", "C5", "Eb5"]
+            return ["F2", "C3", "F3", "G#3", "C4", "F4"]
         case (.fm, .chord7):
-            return ["F3", "C", "F", "Ab", "Eb", "C5"]
+            return ["F2", "C3", "D#3", "G#3", "C4", "F4"]
         // G chord variants
         case (.g, .chordnormal):
             return ["G2", "B2", "D3", "G3", "B3", "G4"]
         case (.g, .chord7):
             return ["G2", "B2", "D3", "G3", "B3", "F#4"]
         case (.gm, .chordnormal):
-            return ["G3", "D", "G", "A#", "D", "G5"]
+            return ["G2", "D3", "G3", "A#3", "D4", "G4"]
         case (.gm, .chord7):
-            return ["G3", "B3", "D", "F", "Eb", "B"]
+            return ["G2", "D3", "F3", "A#3", "D4", "G4"]
         // A chord variants
         case (.a, .chordnormal):
             return ["E2", "A2", "E3", "A3", "C#4", "E4"]
         case (.a, .chord7):
-            return ["E3", "A3", "E", "G#", "A", "C#5"]
+            return ["E2", "A2", "E3", "G#3", "C#4", "E4"]
         case (.am, .chordnormal):
-            return ["E3", "A3", "E", "A", "C5", "E5"]
+            return ["E2", "A2", "E3", "A3", "C4", "E4"]
         case (.am, .chord7):
-            return ["E3", "A3", "E", "G", "C", "A"]
+            return ["G2", "D3", "F3", "A#3", "D4", "G4"]
         // B chord variants
         case (.b, .chordnormal):
             return ["F#2", "B2", "F#3", "B3", "D#4", "F#4"]
         case (.b, .chord7):
-            return ["F#3", "B3", "F#", "A#", "D#", "F#5"]
+            return ["F#2", "B2", "F#3", "A#3", "D#4", "F#4"]
         case (.bm, .chordnormal):
-            return ["F#3", "B3", "F#", "A", "D5", "F#5"]
+            return ["F#2", "B2", "F#3", "B3", "D4", "F#4"]
         case (.bm, .chord7):
-            return ["F#3", "B3", "F#", "A", "D", "F#5"]
+            return ["F#2", "B2", "F#3", "A3", "D4", "F#4"]
         // none or unrecognized combinations
         default:
-            return ["E3", "A3", "D", "G", "B", "E5"]
+            return ["E2", "A2", "D3", "G3", "B3", "E4"]
         }
     }
 }
