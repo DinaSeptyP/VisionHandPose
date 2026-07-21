@@ -94,10 +94,10 @@ struct HandTrackingExperienceView: View {
                             Text(label)
                                 .font(.custom("Inter", size: 9))
                                 .fontWeight(.bold)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color("PrimaryFont"))
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(Color.black.opacity(0.58))
+                                .background(Color("PrimaryBackground").opacity(0.58))
                                 .clipShape(Capsule())
                                 .position(x: chordLabelX, y: h * ratio - 11)
                         }
@@ -105,6 +105,28 @@ struct HandTrackingExperienceView: View {
                         let startX = manager.isRightHanded ? w * 0.52 : w * 0.05
                         let endX = manager.isRightHanded ? w * 0.95 : w * 0.48
                         let activeVoicing = manager.activeChord.voicing(for: manager.activeStrumType)
+                        
+                        let holeX = (startX + endX) / 2
+                        let topY = stringYPositions.first! * h
+                        let bottomY = stringYPositions.last! * h
+                        let holeY = (topY + bottomY) / 2
+                        let stringSpan = bottomY - topY
+                        let holeRadius = max(50, stringSpan * 1.2)
+
+                        ZStack {
+                            Circle()
+                                .fill(Color("PrimaryPrimaryDark").opacity(0.4))
+
+                            Circle()
+                                .stroke(Color("PrimaryBrown"), lineWidth: 8)
+
+                            Circle()
+                                .stroke(Color("PrimaryFont").opacity(0.2), lineWidth: 2)
+                                .padding(6)
+                        }
+                        .frame(width: holeRadius * 1.3, height: holeRadius * 1.3)
+                        .position(x: holeX, y: holeY)
+
 
                         ForEach(0..<6) { i in
                             let stringY = stringYPositions[i] * h
@@ -120,7 +142,7 @@ struct HandTrackingExperienceView: View {
                             }
                             .stroke(
                                 isDragging ? Color.yellow.opacity(0.9) :
-                                    (lastTriggeredStrings[i] ? Color("PrimaryBrown") : Color.white.opacity(0.6)),
+                                    (lastTriggeredStrings[i] ? Color("PrimaryBrown") : Color("PrimaryFont").opacity(0.6)),
                                 lineWidth: isDragging ? 3.0 : (lastTriggeredStrings[i] ? 4.0 : 1.5)
                             )
                             .shadow(color: isDragging ? .yellow : (lastTriggeredStrings[i] ? .primaryBrown : .clear), radius: 8)
@@ -135,7 +157,7 @@ struct HandTrackingExperienceView: View {
                                     .foregroundColor(Color("PrimaryFont"))
                                     .padding(.horizontal, 5)
                                     .padding(.vertical, 1)
-                                    .background(lastTriggeredStrings[i] ? Color("PrimaryFont") : Color.black.opacity(0.5))
+                                    .background(lastTriggeredStrings[i] ? Color("PrimaryFont") : Color("PrimaryDark").opacity(0.5))
                                     .cornerRadius(3)
                                     .position(x: textX, y: stringY - 8)
                             }
