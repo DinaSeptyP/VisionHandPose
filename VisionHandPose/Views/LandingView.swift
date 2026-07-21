@@ -16,23 +16,26 @@ struct LandingView: View {
         0.65,
         0.75
     ]
-
+    
     @State private var path = NavigationPath()
     @State private var animate = false
     @State private var vibrate = false
-
+    @Environment(\.colorScheme) var colorScheme
+    
     var body: some View {
         NavigationStack(path: $path) {
             ZStack {
                 Color("PrimaryBackground").ignoresSafeArea()
                 
                 ZStack {
-
-                    Image("GuitarBg")
-                        .resizable()
-                        .scaledToFill()
-                        .ignoresSafeArea()
-
+                    
+                    Image(colorScheme == .dark
+                          ? "GuitarBgDark"
+                          : "GuitarBgLight")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                    
                     RadialGradient(
                         colors: [
                             Color(
@@ -58,8 +61,7 @@ struct LandingView: View {
                         : 0
                     )
                     .stroke(
-                        Color.white,
-                        lineWidth: 0.2
+                        Color("PrimaryDark"), lineWidth: 0.2
                     )
                     .animation(
                         .easeOut(duration: 1.8)
@@ -84,7 +86,7 @@ struct LandingView: View {
                         Text("StrumMe")
                             .font(.custom("Playfair Display", size: 100))
                             .fontWeight(.black)
-                            .foregroundStyle(Color("PrimaryFont"))
+                            .foregroundStyle(Color("PrimaryBrown"))
                         Text("Where your hand become guitar")
                             .font(.custom("Playfair Display", size: 28, relativeTo: .title))
                             .fontWeight(.regular)
@@ -130,12 +132,12 @@ struct LandingView: View {
                     }
                 }
             }
-
+            
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now()) {
                     animate = true
                 }
-
+                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                     vibrate = true
                 }

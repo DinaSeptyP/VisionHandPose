@@ -54,6 +54,30 @@ enum MusicalChord: String {
     case a = "A"
     case b = "B"
     
+    case cSharp = "C#"
+    case dSharp = "D#"
+    case fSharp = "F#"
+    case gSharp = "G#"
+    case aSharp = "A#"
+    
+    case dFlat = "D♭"
+    case eFlat = "E♭"
+    case gFlat = "G♭"
+    case aFlat = "A♭"
+    case bFlat = "B♭"
+    
+    case cSharpm = "C#m"
+    case dSharpm = "D#m"
+    case fSharpm = "F#m"
+    case gSharpm = "G#m"
+    case aSharpm = "A#m"
+    
+    case dFlatm = "D♭m"
+    case eFlatm = "E♭m"
+    case gFlatm = "G♭m"
+    case aFlatm = "A♭m"
+    case bFlatm = "B♭m"
+    
     //dari dylan
     case cm = "Cm"
     case dm = "Dm"
@@ -62,11 +86,11 @@ enum MusicalChord: String {
     case gm = "Gm"
     case am = "Am"
     case bm = "Bm"
-
+    
     var NotesTypeSuffix: String {
         ""
     }
-
+    
     var icon: String {
         switch self {
         case .none: return "hand.raised.slash"
@@ -78,6 +102,28 @@ enum MusicalChord: String {
         case .a:    return "hand.fist.fill"
         case .b:    return "hands.sparkles.fill"
         
+        case .cSharp:    return "hand.point.up.left.fill"
+        case .dSharp:    return "hand.victory.fill"
+        case .fSharp:    return "hand.raised.fill"
+        case .gSharp:    return "hand.raised.fill"
+        case .aSharp:    return "hand.fist.fill"
+        case .cSharpm:    return "hand.point.up.left.fill"
+        case .dSharpm:    return "hand.victory.fill"
+        case .fSharpm:    return "hand.raised.fill"
+        case .gSharpm:    return "hand.raised.fill"
+        case .aSharpm:    return "hand.fist.fill"
+        
+        case .dFlat:    return "hand.victory.fill"
+        case .eFlat:    return "hand.point.up.left.fill"
+        case .gFlat:    return "hand.raised.fill"
+        case .aFlat:    return "hand.fist.fill"
+        case .bFlat:    return "hand.raised.fill"
+        case .dFlatm:    return "hand.victory.fill"
+        case .eFlatm:    return "hand.point.up.left.fill"
+        case .gFlatm:    return "hand.raised.fill"
+        case .aFlatm:    return "hand.fist.fill"
+        case .bFlatm:    return "hand.raised.fill"
+            
         //dari dylan
         case .cm:    return "hand.fist.fill"
         case .dm:    return "hand.raised.fill"
@@ -88,7 +134,7 @@ enum MusicalChord: String {
         case .bm:    return "hand.raised.slash"
         }
     }
-
+    
     // Finger pattern used to trigger this chord
     var fingerPattern: String {
         switch self {
@@ -100,18 +146,40 @@ enum MusicalChord: String {
         case .g:    return "All five fingers"
         case .a:    return "Thumb only"
         case .b:    return "Thumb + index only"
+        
+        case .cSharp:    return "Index only"
+        case .dSharp:    return "Index + middle only"
+        case .fSharp:    return "Index + middle + ring + little only"
+        case .gSharp:    return "All five fingers"
+        case .aSharp:    return "Thumb only"
+        case .cSharpm:    return "Index only"
+        case .dSharpm:    return "Index + middle only"
+        case .fSharpm:    return "Index + middle + ring + little only"
+        case .gSharpm:    return "All five fingers"
+        case .aSharpm:    return "Thumb only"
+        
+        case .dFlat:    return "Index + middle only"
+        case .eFlat:    return "Index + middle + ring only"
+        case .gFlat:    return "All five fingers"
+        case .aFlat:    return "Thumb only"
+        case .bFlat:    return "Thumb + index only"
+        case .dFlatm:    return "Index + middle + little only"
+        case .eFlatm:    return "Middle + ring + little only"
+        case .gFlatm:    return "Thumb + index + middle + little only"
+        case .aFlatm:    return "Thumb + little only"
+        case .bFlatm:    return "Thumb + index + little only"
             
-        //dari dylan
+            //dari dylan
         case .cm:    return "Index + little only"
         case .dm:    return "Index + middle + little only"
-        case .em:    return "Middle + ring only"
+        case .em:    return "Middle + ring + little only"
         case .fm:    return "Thumb + index + middle only"
         case .gm:    return "Thumb + index + middle + little only"
         case .am:    return "Thumb + little only"
         case .bm:    return "Thumb + index + little only"
         }
     }
-
+    
     // Notes (as ChordPlayer note names) that make up the chord for this pose
     var notes: [String] {
         switch self {
@@ -119,167 +187,352 @@ enum MusicalChord: String {
         case .c:    return ["C", "E", "G"]
         case .d:    return ["D", "F#", "A"]
         case .e:    return ["E", "G#", "B"]
-        case .f:    return ["F", "A", "C2"]
+        case .f:    return ["F", "A", "C"]
         case .g:    return ["G", "B", "D"]
         case .a:    return ["A", "C#", "E"]
         case .b:    return ["B", "D#", "F#"]
+        
+        case .cSharp:    return ["C#", "F", "G#"]
+        case .dSharp:    return ["D#", "G", "A#"]
+        case .fSharp:    return ["F#", "A#", "C#"]
+        case .gSharp:    return ["G#", "C", "D#"]
+        case .aSharp:    return ["A#", "D", "E#"]
+            
+        case .dFlat:    return ["C#", "F", "G#"]
+        case .eFlat:    return ["D#", "G", "A#"]
+        case .gFlat:    return ["F#", "A#", "C#"]
+        case .aFlat:    return ["G#", "C", "D#"]
+        case .bFlat:    return ["A#", "D", "F"]
             
         //dari dylan
         case .cm:    return ["C", "D#", "G"]
         case .dm:    return ["D", "F", "A"]
         case .em:    return ["E", "G", "B"]
-        case .fm:    return ["F", "G#", "C2"]
+        case .fm:    return ["F", "G#", "C"]
         case .gm:    return ["G", "A#", "D"]
         case .am:    return ["A", "C", "E"]
         case .bm:    return ["B", "D", "F#"]
+        
+        case .cSharpm:    return ["C#", "E", "G#"]
+        case .dSharpm:    return ["D#", "F#", "A#"]
+        case .fSharpm:    return ["F#", "A", "C#"]
+        case .gSharpm:    return ["G#", "B", "D#"]
+        case .aSharpm:    return ["A#", "C#", "F"]
+            
+        case .dFlatm:    return ["C#", "E", "G#"]
+        case .eFlatm:    return ["D#", "F#", "A#"]
+        case .gFlatm:    return ["F#", "A", "C#"]
+        case .aFlatm:    return ["G#", "B", "D#"]
+        case .bFlatm:    return ["A#", "C#", "F"]
         }
     }
-
+    
     var guitarStrings: [String] {
         voicing(for: .chordnormal)
     }
     
     // ADA YANG DI GANTI
-//    func voicing(for type: StrumChordType) -> [String] {
-//        switch (self, type) {
-//        // C chord variants
-//        case (.c, .chordnormal):
-//            return ["E3", "C", "E", "G", "C5", "E5"]
-//        case (.c, .chord7):
-//            return ["E3", "C", "E", "G", "B", "C5"]
-//        case (.cm, .chordnormal):
-//            return ["E3", "C", "Eb", "G", "C5", "Eb5"]
-//        case (.cm, .chord7):
-//            return ["E3", "C", "Eb", "G", "Bb", "Eb5"]
-//        // D chord variants
-//        case (.d, .chordnormal):
-//            return ["D3", "A3", "D", "F#", "A", "D5"]
-//        case (.d, .chord7):
-//            return ["D3", "A3", "D", "F#", "A", "C#5"]
-//        case (.dm, .chordnormal):
-//            return ["D3", "A3", "D", "F", "A", "D5"]
-//        case (.dm, .chord7):
-//            return ["D3", "A3", "D", "F", "C", "A"]
-//        // E chord variants
-//        case (.e, .chordnormal):
-//            return ["E3", "B3", "E", "G", "B", "E5"]
-//        case (.e, .chord7):
-//            return ["E3", "B3", "E", "G", "D", "B"]
-//        case (.em, .chordnormal):
-//            return ["E3", "B3", "E", "G", "B", "E5"]
-//        case (.em, .chord7):
-//            return ["E3", "B3", "E", "G", "D", "E5"]
-//        // F chord variants
-//        case (.f, .chordnormal):
-//            return ["F3", "C", "F", "A", "C5", "F5"]
-//        case (.f, .chord7):
-//            return ["F3", "C", "F", "A", "E", "C5"]
-//        case (.fm, .chordnormal):
-//            return ["F3", "C", "F", "Ab", "C5", "Eb5"]
-//        case (.fm, .chord7):
-//            return ["F3", "C", "F", "Ab", "Eb", "C5"]
-//        // G chord variants
-//        case (.g, .chordnormal):
-//            return ["G3", "B3", "D", "G", "B", "G5"]
-//        case (.g, .chord7):
-//            return ["G3", "B3", "D", "F#", "A", "B"]
-//        case (.gm, .chordnormal):
-//            return ["G3", "D", "G", "A#", "D", "G5"]
-//        case (.gm, .chord7):
-//            return ["G3", "B3", "D", "F", "Eb", "B"]
-//        // A chord variants
-//        case (.a, .chordnormal):
-//            return ["E3", "A3", "E", "A", "C#5", "E5"]
-//        case (.a, .chord7):
-//            return ["E3", "A3", "E", "G#", "A", "C#5"]
-//        case (.am, .chordnormal):
-//            return ["E3", "A3", "E", "A", "C5", "E5"]
-//        case (.am, .chord7):
-//            return ["E3", "A3", "E", "G", "C", "A"]
-//        // B chord variants
-//        case (.b, .chordnormal):
-//            return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
-//        case (.b, .chord7):
-//            return ["F#3", "B3", "F#", "A#", "D#", "F#5"]
-//        case (.bm, .chordnormal):
-//            return ["F#3", "B3", "F#", "A", "D#5", "F#5"]
-//        case (.bm, .chord7):
-//            return ["F#3", "B3", "F#", "A", "D", "F#5"]
-//        // none or unrecognized combinations
-//        default:
-//            return ["E3", "A3", "D", "G", "B", "E5"]
-//        }
-//    }
+    //    func voicing(for type: StrumChordType) -> [String] {
+    //        switch (self, type) {
+    //        // C chord variants
+    //        case (.c, .chordnormal):
+    //            return ["E3", "C", "E", "G", "C5", "E5"]
+    //        case (.c, .chord7):
+    //            return ["E3", "C", "E", "G", "B", "C5"]
+    //        case (.cm, .chordnormal):
+    //            return ["E3", "C", "Eb", "G", "C5", "Eb5"]
+    //        case (.cm, .chord7):
+    //            return ["E3", "C", "Eb", "G", "Bb", "Eb5"]
+    //        // D chord variants
+    //        case (.d, .chordnormal):
+    //            return ["D3", "A3", "D", "F#", "A", "D5"]
+    //        case (.d, .chord7):
+    //            return ["D3", "A3", "D", "F#", "A", "C#5"]
+    //        case (.dm, .chordnormal):
+    //            return ["D3", "A3", "D", "F", "A", "D5"]
+    //        case (.dm, .chord7):
+    //            return ["D3", "A3", "D", "F", "C", "A"]
+    //        // E chord variants
+    //        case (.e, .chordnormal):
+    //            return ["E3", "B3", "E", "G", "B", "E5"]
+    //        case (.e, .chord7):
+    //            return ["E3", "B3", "E", "G", "D", "B"]
+    //        case (.em, .chordnormal):
+    //            return ["E3", "B3", "E", "G", "B", "E5"]
+    //        case (.em, .chord7):
+    //            return ["E3", "B3", "E", "G", "D", "E5"]
+    //        // F chord variants
+    //        case (.f, .chordnormal):
+    //            return ["F3", "C", "F", "A", "C5", "F5"]
+    //        case (.f, .chord7):
+    //            return ["F3", "C", "F", "A", "E", "C5"]
+    //        case (.fm, .chordnormal):
+    //            return ["F3", "C", "F", "Ab", "C5", "Eb5"]
+    //        case (.fm, .chord7):
+    //            return ["F3", "C", "F", "Ab", "Eb", "C5"]
+    //        // G chord variants
+    //        case (.g, .chordnormal):
+    //            return ["G3", "B3", "D", "G", "B", "G5"]
+    //        case (.g, .chord7):
+    //            return ["G3", "B3", "D", "F#", "A", "B"]
+    //        case (.gm, .chordnormal):
+    //            return ["G3", "D", "G", "A#", "D", "G5"]
+    //        case (.gm, .chord7):
+    //            return ["G3", "B3", "D", "F", "Eb", "B"]
+    //        // A chord variants
+    //        case (.a, .chordnormal):
+    //            return ["E3", "A3", "E", "A", "C#5", "E5"]
+    //        case (.a, .chord7):
+    //            return ["E3", "A3", "E", "G#", "A", "C#5"]
+    //        case (.am, .chordnormal):
+    //            return ["E3", "A3", "E", "A", "C5", "E5"]
+    //        case (.am, .chord7):
+    //            return ["E3", "A3", "E", "G", "C", "A"]
+    //        // B chord variants
+    //        case (.b, .chordnormal):
+    //            return ["F#3", "B3", "F#", "B", "D#5", "F#5"]
+    //        case (.b, .chord7):
+    //            return ["F#3", "B3", "F#", "A#", "D#", "F#5"]
+    //        case (.bm, .chordnormal):
+    //            return ["F#3", "B3", "F#", "A", "D#5", "F#5"]
+    //        case (.bm, .chord7):
+    //            return ["F#3", "B3", "F#", "A", "D", "F#5"]
+    //        // none or unrecognized combinations
+    //        default:
+    //            return ["E3", "A3", "D", "G", "B", "E5"]
+    //        }
+    //    }
     
     //versi dylan
     func voicing(for type: StrumChordType) -> [String] {
         switch (self, type) {
-        // C chord variants
+            
+        // MARK: C
         case (.c, .chordnormal):
-            return ["E2", "C3", "E3", "G3", "C4", "E4"]
+            return ["E3", "C4", "E4", "G4", "C5", "E5"]
         case (.c, .chord7):
-            return ["E2", "C3", "E3", "G3", "B3", "E4"]
+            return ["E3", "C4", "E4", "G4", "B4", "E5"]
         case (.cm, .chordnormal):
-            return ["E2", "C3", "G3", "C4", "D#4", "G4"]
+            return ["E3", "C4", "G4", "C5", "D#5", "G5"]
         case (.cm, .chord7):
-            return ["E2", "C3", "G3", "A#3", "D#4", "G4"]
-        // D chord variants
+            return ["E3", "C4", "G4", "A#4", "D#5", "G5"]
+        case (.cSharp, .chordnormal):
+            return ["F3", "C#4", "F4", "G#4", "C#5", "F5"]
+        case (.cSharp, .chord7):
+            return ["F3", "C#4", "F4", "G#4", "C5", "F5"]
+        case (.cSharpm, .chordnormal):
+            return ["F3", "C#4", "F#4", "G#4", "C#5", "F#5"]
+        case (.cSharpm, .chord7):
+            return ["F3", "C#4", "E4", "G#4", "C#5", "F#5"]
+            
+        // MARK: D
         case (.d, .chordnormal):
-            return ["F#2", "A2", "D3", "A3", "D4", "F#4"]
+            return ["F#3", "A3", "D4", "A4", "D5", "F#5"]
         case (.d, .chord7):
-            return ["F#2", "A2", "D3", "A3", "C#4", "F#4"]
+            return ["F#3", "A3", "D4", "A4", "C#5", "F#5"]
         case (.dm, .chordnormal):
-            return ["F#2", "A2", "D3", "A3", "D4", "F4"]
+            return ["F#3", "A3", "D4", "A4", "D5", "F5"]
         case (.dm, .chord7):
-            return ["F#2", "A2", "D3", "A3", "C4", "F4"]
-        // E chord variants
+            return ["F#3", "A3", "D4", "A4", "C5", "F5"]
+        case (.dSharp, .chordnormal):
+            return ["G3", "D#4", "G4", "A#4", "D#5", "G5"]
+        case (.dSharp, .chord7):
+            return ["G3", "D#4", "G4", "A#4", "D5", "G5"]
+        case (.dSharpm, .chordnormal):
+            return ["G3", "D#4", "G#4", "A#4", "D#5", "G#5"]
+        case (.dSharpm, .chord7):
+            return ["G3", "D#4", "F#4", "A#4", "D#5", "G#5"]
+        case (.dFlat, .chordnormal):
+            return ["F3", "C#4", "F4", "G#4", "C#5", "F5"]
+        case (.dFlat, .chord7):
+            return ["F3", "C#4", "F4", "G#4", "C5", "F5"]
+        case (.dFlatm, .chordnormal):
+            return ["F3", "C#4", "F#4", "G#4", "C#5", "F#5"]
+        case (.dFlatm, .chord7):
+            return ["F3", "C#4", "E4", "G#4", "C#5", "F#5"]
+            
+        // MARK: E
         case (.e, .chordnormal):
-            return ["E2", "B2", "E3", "G#3", "B3", "E4"]
+            return ["E3", "B3", "E4", "G#4", "B4", "E5"]
         case (.e, .chord7):
-            return ["E2", "B2", "D#3", "G#3", "B3", "E4"]
+            return ["E3", "B3", "D#4", "G#4", "B4", "E5"]
         case (.em, .chordnormal):
-            return ["E2", "B2", "E3", "G3", "B3", "E4"]
+            return ["E3", "B3", "E4", "G4", "B4", "E5"]
         case (.em, .chord7):
-            return ["E2", "B2", "D3", "G3", "B3", "E4"]
-        // F chord variants
+            return ["E3", "B3", "D4", "G4", "B4", "E5"]
+        case (.eFlat, .chordnormal):
+            return ["G3", "D#4", "G4", "A#4", "D#5", "G5"]
+        case (.eFlat, .chord7):
+            return ["G3", "D#4", "G4", "A#4", "D5", "G5"]
+        case (.eFlatm, .chordnormal):
+            return ["G3", "D#4", "G#4", "A#4", "D#5", "G#5"]
+        case (.eFlatm, .chord7):
+            return ["G3", "D#4", "F#4", "A#4", "D#5", "G#5"]
+            
+        // MARK: F
         case (.f, .chordnormal):
-            return ["F2", "C3", "F3", "A3", "C4", "F4"]
+            return ["F3", "C4", "F4", "A4", "C5", "F5"]
         case (.f, .chord7):
-            return ["F2", "C3", "F3", "A3", "C4", "E4"]
+            return ["F3", "C4", "F4", "A4", "C5", "E5"]
         case (.fm, .chordnormal):
-            return ["F2", "C3", "F3", "G#3", "C4", "F4"]
+            return ["F3", "C4", "F4", "G#4", "C5", "F5"]
         case (.fm, .chord7):
-            return ["F2", "C3", "D#3", "G#3", "C4", "F4"]
-        // G chord variants
+            return ["F3", "C4", "D#4", "G#4", "C5", "F5"]
+        case (.fSharp, .chordnormal):
+            return ["F#3", "C#4", "F#4", "A#4", "C#5", "F#5"]
+        case (.fSharp, .chord7):
+            return ["F#3", "C#4", "F#4", "A#4", "C#5", "E5"]
+        case (.fSharpm, .chordnormal):
+            return ["F#3", "C#4", "F#4", "A4", "C#5", "F#5"]
+        case (.fSharpm, .chord7):
+            return ["F#3", "C#4", "E4", "A4", "C#5", "F#5"]
+            
+        // MARK: G
         case (.g, .chordnormal):
-            return ["G2", "B2", "D3", "G3", "B3", "G4"]
+            return ["G3", "B3", "D4", "G4", "B4", "G5"]
         case (.g, .chord7):
-            return ["G2", "B2", "D3", "G3", "B3", "F#4"]
+            return ["G3", "B3", "D4", "G4", "B4", "F#5"]
         case (.gm, .chordnormal):
-            return ["G2", "D3", "G3", "A#3", "D4", "G4"]
+            return ["G3", "D4", "G4", "A#4", "D5", "G5"]
         case (.gm, .chord7):
-            return ["G2", "D3", "F3", "A#3", "D4", "G4"]
-        // A chord variants
+            return ["G3", "D4", "F4", "A#4", "D5", "G5"]
+        case (.gSharp, .chordnormal):
+            return ["G#3", "D#4", "G#4", "C5", "D#5", "G#5"]
+        case (.gSharp, .chord7):
+            return ["G#3", "D#4", "G#4", "C5", "D#5", "F#5"]
+        case (.gSharpm, .chordnormal):
+            return ["G#3", "D#4", "G#4", "B4", "D#5", "G#5"]
+        case (.gSharpm, .chord7):
+            return ["G#3", "D#4", "F#4", "B4", "D#5", "G#5"]
+        case (.gFlat, .chordnormal):
+            return ["F#3", "C#4", "F#4", "A#4", "C#5", "F#5"]
+        case (.gFlat, .chord7):
+            return ["F#3", "C#4", "F#4", "A#4", "C#5", "E5"]
+        case (.gFlatm, .chordnormal):
+            return ["F#3", "C#4", "F#4", "A4", "C#5", "F#5"]
+        case (.gFlatm, .chord7):
+            return ["F#3", "C#4", "E4", "A4", "C#5", "F#5"]
+            
+        // MARK: A
         case (.a, .chordnormal):
-            return ["E2", "A2", "E3", "A3", "C#4", "E4"]
+            return ["E3", "A3", "E4", "A4", "C#5", "E5"]
         case (.a, .chord7):
-            return ["E2", "A2", "E3", "G#3", "C#4", "E4"]
+            return ["E3", "A3", "E4", "G#4", "C#5", "E5"]
         case (.am, .chordnormal):
-            return ["E2", "A2", "E3", "A3", "C4", "E4"]
+            return ["E3", "A3", "E4", "A4", "C5", "E5"]
         case (.am, .chord7):
-            return ["G2", "D3", "F3", "A#3", "D4", "G4"]
-        // B chord variants
+            return ["E3", "A3", "G4", "A4", "C5", "E5"]
+        case (.aSharp, .chordnormal):
+            return ["F3", "A#3", "F4", "A#4", "D5", "F5"]
+        case (.aSharp, .chord7):
+            return ["F3", "A#3", "F4", "G#4", "D5", "F5"]
+        case (.aSharpm, .chordnormal):
+            return ["F#3", "A#3", "F#4", "A#4", "C#5", "F#5"]
+        case (.aSharpm, .chord7):
+            return ["F#3", "A#3", "G#4", "A#4", "C#5", "F#5"]
+        case (.aFlat, .chordnormal):
+            return ["G#3", "D#4", "G#4", "C5", "D#5", "G#5"]
+        case (.aFlat, .chord7):
+            return ["G#3", "D#4", "G#4", "C5", "D#5", "F#5"]
+        case (.aFlatm, .chordnormal):
+            return ["G#3", "D#4", "G#4", "B4", "D#5", "G#5"]
+        case (.aFlatm, .chord7):
+            return ["G#3", "D#4", "F#4", "B4", "D#5", "G#5"]
+            
+        // MARK: B
         case (.b, .chordnormal):
-            return ["F#2", "B2", "F#3", "B3", "D#4", "F#4"]
+            return ["F#3", "B3", "F#4", "B4", "D#5", "F#5"]
         case (.b, .chord7):
-            return ["F#2", "B2", "F#3", "A#3", "D#4", "F#4"]
+            return ["F#3", "B3", "F#4", "A#4", "D#5", "F#5"]
         case (.bm, .chordnormal):
-            return ["F#2", "B2", "F#3", "B3", "D4", "F#4"]
+            return ["F#3", "B3", "F#4", "B4", "D5", "F#5"]
         case (.bm, .chord7):
-            return ["F#2", "B2", "F#3", "A3", "D4", "F#4"]
-        // none or unrecognized combinations
+            return ["F#3", "B3", "F#4", "A4", "D5", "F#5"]
+        case (.bFlat, .chordnormal):
+            return ["F3", "A#3", "F4", "A#4", "D5", "F5"]
+        case (.bFlat, .chord7):
+            return ["F3", "A#3", "F4", "G#4", "D5", "F5"]
+        case (.bFlatm, .chordnormal):
+            return ["F#3", "A#3", "F#4", "A#4", "C#5", "F#5"]
+        case (.bFlatm, .chord7):
+            return ["F#3", "A#3", "G#4", "A#4", "C#5", "F#5"]
+            
         default:
-            return ["E2", "A2", "D3", "G3", "B3", "E4"]
+            return ["E3", "A3", "D4", "G4", "B4", "E5"]
+        }
+    }
+}
+
+extension MusicalChord {
+    func applying(_ notesType: NotesType) -> MusicalChord {
+        switch notesType {
+        case .natural:
+            return self
+
+        case .sharp:
+            switch self {
+            case .c: return .cSharp
+            case .d: return .dSharp
+            case .e: return .f
+            case .f: return .fSharp
+            case .g: return .gSharp
+            case .a: return .aSharp
+            case .b: return .c
+
+            // minor
+            case .cm: return .cSharpm
+            case .dm: return .dSharpm
+            case .em: return .fm
+            case .fm: return .fSharpm
+            case .gm: return .gSharpm
+            case .am: return .aSharpm
+            case .bm: return .cm
+
+            default:
+                return self
+            }
+
+        case .flat:
+            switch self {
+            case .c: return .b
+            case .d: return .dFlat
+            case .e: return .eFlat
+            case .f: return .e
+            case .g: return .gFlat
+            case .a: return .aFlat
+            case .b: return .bFlat
+
+            // minor
+            case .cm: return .bm
+            case .dm: return .dFlatm
+            case .em: return .eFlatm
+            case .fm: return .em
+            case .gm: return .gFlatm
+            case .am: return .aFlatm
+            case .bm: return .bFlatm
+
+            default:
+                return self
+            }
+        }
+    }
+    
+    func displayName(for type: StrumChordType) -> String {
+        switch type {
+
+            case .none:
+                return rawValue
+
+            case .chordnormal:
+                // Major tampil "C", Minor tetap "Cm"
+                return rawValue
+
+            case .chord7:
+                if rawValue.hasSuffix("m") {
+                    return rawValue + "7"      // Cm -> Cm7
+                } else {
+                    return rawValue + "maj7"   // C -> Cmaj7
+                }
         }
     }
 }
@@ -1112,7 +1365,7 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         //dari dylan
         case (false, true, false, false, true): baseNote = .cm  // Index + little only
         case (false, true, true, false, true): baseNote = .dm  // Index + middle + little only
-        case (false, false, true, true, false): baseNote = .em  // Middle + ring only
+        case (false, false, true, true, true): baseNote = .em  // Middle + ring + little only
         case (true, true, true, false, false): baseNote = .fm  // Thumb + index + middle only
         case (true, true, true, false, true): baseNote = .gm  // Thumb + index + middle + little only
         case (true, false, false, false, true): baseNote = .am  // Thumb + little only
@@ -1122,18 +1375,18 @@ class HandPoseManager: NSObject, ObservableObject, AVCaptureVideoDataOutputSampl
         }
 
         // Apply NotesType based on hand center Y position (middle of palm)
-        let NotesType = NotesType.from(y: handCenterY ?? 0.5)
-
+        let notesType = NotesType.from(y: handCenterY ?? 0.5)
+        return baseNote.applying(notesType)
         // For sharp zone, shift note up (e.g., C becomes C# = D♭)
         // For flat zone, shift note down conceptually, but we'll display as flat suffix
-        switch NotesType {
-        case .sharp:
-            return baseNote
-        case .natural:
-            return baseNote
-        case .flat:
-            return baseNote
-        }
+//        switch NotesType {
+//        case .sharp:
+//            return baseNote
+//        case .natural:
+//            return baseNote
+//        case .flat:
+//            return baseNote
+//        }
     }
 
     private nonisolated func calculateFingerDistances(joints: [VNHumanHandPoseObservation.JointName: HandJointPoint]) -> [String: CGFloat] {
