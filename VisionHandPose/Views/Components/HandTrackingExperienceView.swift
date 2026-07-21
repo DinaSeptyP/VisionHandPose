@@ -21,6 +21,7 @@ struct HandTrackingExperienceView: View {
     
     var topContentInset: CGFloat = 0
     var onStrumPositionChanged: () -> Void = {}
+    var onStringSpacingChanged: () -> Void = {}
     
     var body: some View {
         Group {
@@ -233,7 +234,7 @@ struct HandTrackingExperienceView: View {
                                         }
                                         .onEnded { _ in
                                             draggingCorner = nil
-                                            onStrumPositionChanged()
+                                            onStringSpacingChanged()
                                         }
                                 )
                         }

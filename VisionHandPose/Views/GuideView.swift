@@ -46,6 +46,19 @@ struct GuideView: View {
         }
     }
     
+    private var customExperience: String {
+        switch howToPlayStep {
+        case 0:
+            return "Use the "
+        case 1:
+            return "Now place your right hand on the strum zone"
+        case 2:
+            return "Now place your right hand on the strum zone"
+        default:
+            return "You're ready to play!, now check out the “Chord Guides” to learns how to play the chords"
+        }
+    }
+    
     var body: some View {
         NavigationSplitView {
             // Sidebar Navigation (Native Apple iPadOS Sidebar Style)
@@ -78,7 +91,6 @@ struct GuideView: View {
                             number: 1,
                             logo: part.iconName,
                             title: part.rawValue,
-                            subtitle: "Allow front camera access to scan your hand and finger movements.",
                             tip: manager.cameraPermissionGranted ? "Great, now check out the “How to Play” guides to learn how to play" : "Grant permission to use your camera",
                             manager: manager
                         )
@@ -88,7 +100,6 @@ struct GuideView: View {
                             number: 2,
                             logo: part.iconName,
                             title: part.rawValue,
-                            subtitle: "Position your left hand on the left zone to hold chords, and pinch your right index finger and thumb on the right zone to strum strings.",
                             tip: dynamicTip,
                             manager: manager,
                             chordPlayer: chordPlayer
@@ -105,7 +116,7 @@ struct GuideView: View {
                             number: 4,
                             logo: part.iconName,
                             title: part.rawValue,
-                            tip: "Using the front camera allows you to view real-time hand skeleto tracking directly on the screen",
+                            tip: "",
                             manager: manager,
                             chordPlayer: chordPlayer
                         )
