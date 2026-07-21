@@ -115,7 +115,7 @@ struct HandTrackingExperienceView: View {
 
                         ZStack {
                             Circle()
-                                .fill(Color("PrimaryPrimaryDark").opacity(0.4))
+                                .fill(Color("PrimaryDark").opacity(0.4))
 
                             Circle()
                                 .stroke(Color("PrimaryBrown"), lineWidth: 8)
