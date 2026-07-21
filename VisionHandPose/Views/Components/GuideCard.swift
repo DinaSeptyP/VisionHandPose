@@ -56,20 +56,6 @@ struct GuideCard<Content: View>: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             
-            // Subtitle Description
-            Text(subtitle)
-                .font(.custom("Inter-Regular", size: 16, relativeTo: .body))
-                .foregroundStyle(Color("PrimaryBackground").opacity(0.85))
-                .lineSpacing(4)
-            
-            // Interactive Content Layer (Camera / Experience Visualizer)
-            if Content.self != EmptyView.self {
-                content
-                    .frame(maxWidth: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                    .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 4)
-            }
-            
             // Tip Section
             HStack(spacing: 12) {
                 Image(systemName: "lightbulb.fill")
@@ -88,6 +74,20 @@ struct GuideCard<Content: View>: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color("SecondaryFont").opacity(0.15), lineWidth: 1)
             }
+            
+            // Interactive Content Layer (Camera / Experience Visualizer)
+            if Content.self != EmptyView.self {
+                content
+                    .frame(maxWidth: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 4)
+            }
+            
+            // Subtitle Description
+            Text(subtitle)
+                .font(.custom("Inter-Regular", size: 16, relativeTo: .body))
+                .foregroundStyle(Color("PrimaryBackground").opacity(0.85))
+                .lineSpacing(4)
         }
         .padding(24)
     }

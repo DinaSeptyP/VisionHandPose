@@ -247,18 +247,18 @@ struct HandTrackingExperienceView: View {
                     }
                     VStack {
                         Spacer()
-                        HStack(alignment: .bottom, spacing: 20) {
-                            if manager.isRightHanded {
-                                Spacer()
-                                ChordResultCard(manager: manager)
-                            } else {
-                                ChordResultCard(manager: manager)
-                                Spacer()
+                            HStack(spacing: 20) {
+                                if manager.isRightHanded {
+                                    Spacer()
+                                    ChordResultCard(manager: manager)
+                                } else {
+                                    ChordResultCard(manager: manager)
+                                    Spacer()
+                                }
                             }
+                            .padding(.horizontal, 10)
+                            .padding(.bottom, 10)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 58)
-                    }
                 }
                 .onReceive(manager.stringPluckedSubject) { stringIndex in
                     triggerStrumAction(for: stringIndex)

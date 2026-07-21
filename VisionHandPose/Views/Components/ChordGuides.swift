@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct ChordGuides: View {
     let chords = ["C","D","E","F","G","A","B"]
     let chordTypes = ["Major","Minor","Major7","Minor7"]

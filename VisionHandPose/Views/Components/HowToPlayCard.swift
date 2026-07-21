@@ -19,23 +19,30 @@ struct HowToPlayCard: View {
     @ObservedObject var chordPlayer: ChordPlayer
     
     var body: some View {
-        ScrollView {
-            GuideCard(
-                number: number,
-                logo: logo,
-                title: title,
-                subtitle: subtitle,
-                tip: tip
-            ) {
-                cameraSection
+        GeometryReader { geo in
+            let height = geo.size.height
+            
+            ScrollView {
+                GuideCard(
+                    number: number,
+                    logo: logo,
+                    title: title,
+                    subtitle: subtitle,
+                    tip: tip
+                ) {
+                    cameraSection
+                        .frame(height: height * 0.65)
+                }
+            }
+            .background(Color("PrimaryFont"))
+            .onAppear {
+                manager.checkPermissionAndStart()
             }
         }
-        .background(Color("PrimaryFont"))
-        .onAppear {
-            manager.checkPermissionAndStart()
-        }
     }
+}
 
+extension HowToPlayCard {
     private var cameraSection: some View {
         Group {
             if manager.cameraPermissionGranted {
@@ -47,6 +54,22 @@ struct HowToPlayCard: View {
                         PermissionRequestView(manager: manager)
                     }
             }
+        }
+    }
+
+    private var tipSection: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "lightbulb.max")
+
+            Text("Tip: \(tip)")
+        }
+        .font(.custom("Inter", size: 18))
+        .foregroundStyle(Color("PrimaryBrown"))
+        .padding()
+        .background(Color("SecondaryFont").opacity(0.1))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+            .stroke(Color("SecondaryFont"),lineWidth: 0.5)
         }
         .frame(height: 380)
         .clipShape(RoundedRectangle(cornerRadius: 18))
