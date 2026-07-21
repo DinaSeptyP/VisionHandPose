@@ -25,11 +25,26 @@ enum TutorialPart: String, CaseIterable, Identifiable {
     }
 }
 
+//enum
+
 struct GuideView: View {
-    @Binding var path: NavigationPath
-    @State private var selectedPart: TutorialPart? = .camera
     @StateObject private var manager = HandPoseManager()
     @ObservedObject var chordPlayer: ChordPlayer
+    @State private var selectedPart: TutorialPart? = .camera
+    @State private var howToPlayStep = 0
+    @State private var hasStrummed = false
+    @Binding var path: NavigationPath
+    
+    private var dynamicTip: String {
+        switch howToPlayStep {
+        case 0:
+            return "Place your left hand on the chord zone"
+        case 1:
+            return "Now place your right hand on the strum zone"
+        default:
+            return "You're ready to play!, now check out the “Chord Guides” to learns how to play the chords"
+        }
+    }
     
     var body: some View {
         NavigationSplitView {
@@ -46,6 +61,7 @@ struct GuideView: View {
                 }
                 .padding(.vertical, 8)
             }
+            .tint(Color("PrimaryBrown"))
             .listStyle(.sidebar)
             .navigationTitle("Getting Started")
             
@@ -63,7 +79,7 @@ struct GuideView: View {
                             logo: part.iconName,
                             title: part.rawValue,
                             subtitle: "Allow front camera access to scan your hand and finger movements.",
-                            tip: "Place your device on a stable surface and avoid harsh backlighting for optimal tracking.",
+                            tip: manager.cameraPermissionGranted ? "Great, now check out the “How to Play” guides to learn how to play" : "Grant permission to use your camera",
                             manager: manager
                         )
                         
@@ -73,10 +89,13 @@ struct GuideView: View {
                             logo: part.iconName,
                             title: part.rawValue,
                             subtitle: "Position your left hand on the left zone to hold chords, and pinch your right index finger and thumb on the right zone to strum strings.",
-                            tip: "Perform a pinch gesture with your strumming hand to trigger virtual pick plucks.",
+                            tip: dynamicTip,
                             manager: manager,
                             chordPlayer: chordPlayer
                         )
+                        .onDisappear {
+                            howToPlayStep = 0
+                        }
                         
                     case .chords:
                         ChordGuides()
@@ -86,9 +105,10 @@ struct GuideView: View {
                             number: 4,
                             logo: part.iconName,
                             title: part.rawValue,
-                            tip: "Using the front camera allows you to view real-time hand skeleton tracking directly on screen.",
+                            tip: "Using the front camera allows you to view real-time hand skeleto tracking directly on the screen",
                             manager: manager,
-                            chordPlayer: chordPlayer)
+                            chordPlayer: chordPlayer
+                        )
                     }
                 } else {
                     ContentUnavailableView(
@@ -101,10 +121,30 @@ struct GuideView: View {
         }
         .onDisappear {
             manager.stopSession()
+            manager.cameraPermissionGranted = false
+        }
+        .onChange(of: manager.chordHand != nil) {
+            updateHowToPlayStep()
+        }
+        .onChange(of: manager.strumHand != nil) {
+            updateHowToPlayStep()
         }
     }
+    
+    private func updateHowToPlayStep() {
+        if howToPlayStep == 0, manager.chordHand != nil {
+            howToPlayStep = 1
+        }
+
+        if howToPlayStep == 1, manager.strumHand != nil {
+            howToPlayStep = 2
+        }
+    }
+    
 }
 
+
+
 #Preview {
-    GuideView(path: .constant(NavigationPath()), chordPlayer: ChordPlayer())
+    GuideView(chordPlayer: ChordPlayer(), path: .constant(NavigationPath()))
 }

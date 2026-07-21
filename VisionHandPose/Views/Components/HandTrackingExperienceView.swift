@@ -26,8 +26,10 @@ struct HandTrackingExperienceView: View {
         Group {
             if manager.cameraPermissionGranted {
                 ZStack {
+                    Color.black.opacity(0.2)
+                        .ignoresSafeArea()
                     CameraPreviewView(session: manager.session)
-//                        .ignoresSafeArea()
+                        .ignoresSafeArea()
                     
                     GeometryReader { geo in
                         let w = geo.size.width
@@ -245,18 +247,18 @@ struct HandTrackingExperienceView: View {
                     }
                     VStack {
                         Spacer()
-                        HStack(alignment: .bottom, spacing: 20) {
-                            if manager.isRightHanded {
-                                Spacer()
-                                ChordResultCard(manager: manager)
-                            } else {
-                                ChordResultCard(manager: manager)
-                                Spacer()
+                            HStack(spacing: 20) {
+                                if manager.isRightHanded {
+                                    Spacer()
+                                    ChordResultCard(manager: manager)
+                                } else {
+                                    ChordResultCard(manager: manager)
+                                    Spacer()
+                                }
                             }
+                            .padding(.horizontal, 10)
+                            .padding(.bottom, 10)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 58)
-                    }
                 }
                 .onReceive(manager.stringPluckedSubject) { stringIndex in
                     triggerStrumAction(for: stringIndex)
@@ -267,45 +269,6 @@ struct HandTrackingExperienceView: View {
         }
         .onAppear {
             stringYPositions = manager.stringYPositions
-        }
-    }
-    
-    private var chordSummaryCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("CHORD DETECTED")
-                .font(.custom("Inter", size: 11))
-                .fontWeight(.bold)
-                .tracking(1.4)
-                .foregroundStyle(cardSecondaryForeground)
-            
-            HStack(alignment: .firstTextBaseline, spacing: 7) {
-                Text(manager.activeChord.rawValue + manager.activeAccidental.suffix)
-                    .font(.custom("Playfair Display", size: 48))
-                    .fontWeight(.black)
-                
-                Text(manager.activeStrumType == .none ? "—" : manager.activeStrumType.rawValue)
-                    .font(.custom("Playfair Display", size: 28))
-                    .fontWeight(.bold)
-            }
-            .foregroundStyle(cardForeground)
-            
-            Label(accidentalTitle, systemImage: accidentalIcon)
-                .font(.custom("Inter", size: 11))
-                .fontWeight(.semibold)
-                .foregroundStyle(accidentalColor)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 5)
-                .background(accidentalColor.opacity(0.16))
-                .clipShape(Capsule())
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
-        .frame(width: UIScreen.main.bounds.width * 0.22, alignment: .leading)
-        .background(panelBackground.opacity(0.88))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color("PrimaryBrown").opacity(0.65), lineWidth: 1)
         }
     }
     
@@ -359,7 +322,7 @@ struct HandTrackingExperienceView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 13)
-        .frame(width: UIScreen.main.bounds.width * 0.22, alignment: .trailing)
+        .frame(width: 300, height: 126, alignment: .trailing)
         .background(panelBackground.opacity(0.88))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {

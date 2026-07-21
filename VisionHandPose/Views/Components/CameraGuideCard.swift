@@ -12,24 +12,32 @@ struct CameraGuideCard: View {
     
     let number: Int
     let logo: String
-    let title: String
+    let title: String 
     let subtitle: String
     let tip: String
 
     @ObservedObject var manager: HandPoseManager
     
     var body: some View {
-        ScrollView {
-            GuideCard(
-                number: number,
-                logo: logo,
-                title: title,
-                subtitle: subtitle,
-                tip: tip
-            ) {
-                cameraSection
+        
+        
+        
+        GeometryReader { geo in
+            let height = geo.size.height
+            
+            ScrollView {
+                GuideCard(
+                    number: number,
+                    logo: logo,
+                    title: title,
+                    subtitle: subtitle,
+                    tip: tip
+                ) {
+                    cameraSection
+                        .frame(height: height * 0.70)
+                }
+                .background(Color("PrimaryFont"))
             }
-            .background(Color("PrimaryFont"))
         }
     }
 }
@@ -39,6 +47,7 @@ extension CameraGuideCard {
         Group {
             if manager.cameraPermissionGranted {
                 CameraPreviewView(session: manager.session)
+                
             } else {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.black.opacity(0.04))

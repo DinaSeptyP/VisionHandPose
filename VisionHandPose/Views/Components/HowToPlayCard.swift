@@ -19,20 +19,25 @@ struct HowToPlayCard: View {
     @ObservedObject var chordPlayer: ChordPlayer
     
     var body: some View {
-        ScrollView {
-            GuideCard(
-                number: number,
-                logo: logo,
-                title: title,
-                subtitle: subtitle,
-                tip: tip
-            ) {
-                cameraSection
+        GeometryReader { geo in
+            let height = geo.size.height
+            
+            ScrollView {
+                GuideCard(
+                    number: number,
+                    logo: logo,
+                    title: title,
+                    subtitle: subtitle,
+                    tip: tip
+                ) {
+                    cameraSection
+                        .frame(height: height * 0.65)
+                }
             }
-        }
-        .background(Color("PrimaryFont"))
-        .onAppear {
-            manager.checkPermissionAndStart()
+            .background(Color("PrimaryFont"))
+            .onAppear {
+                manager.checkPermissionAndStart()
+            }
         }
     }
 }
