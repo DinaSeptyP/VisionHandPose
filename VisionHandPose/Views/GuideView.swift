@@ -29,8 +29,8 @@ struct GuideView: View {
     @Binding var path: NavigationPath
     @State private var selectedPart: TutorialPart? = .camera
     @StateObject private var manager = HandPoseManager()
-    @ObservedObject var chordPlayer: ChordPlayer
-    
+    @ObservedObject var chordPlayer: ChordPlayer    
+
     var body: some View {
         NavigationSplitView {
             // Sidebar Navigation (Native Apple iPadOS Sidebar Style)
@@ -82,7 +82,7 @@ struct GuideView: View {
                         ChordGuides()
                         
                     case .settings:
-                        GuideCard(
+                        CustomizeExperience(
                             number: 4,
                             logo: part.iconName,
                             title: part.rawValue,

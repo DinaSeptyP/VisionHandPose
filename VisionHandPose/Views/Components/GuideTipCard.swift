@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct GuideTipCard: View {
-    let tip: String
-    
+    let tip: String    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "lightbulb.fill")
