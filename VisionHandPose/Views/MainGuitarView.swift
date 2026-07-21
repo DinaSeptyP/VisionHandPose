@@ -44,6 +44,7 @@ struct MainGuitarView: View {
                     .foregroundStyle(Color("PrimaryBrown"))
                 }
             }
+            ToolbarSpacer(placement: .topBarTrailing)
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(value: "Guide") {
                     Text("\(Image(systemName: "info.circle"))")
