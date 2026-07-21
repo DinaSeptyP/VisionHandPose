@@ -18,11 +18,11 @@ struct ChordResultCard: View {
                 .foregroundStyle(Color("PrimaryBrown").opacity(0.8))
             
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(manager.activeChord.rawValue)
+                Text(manager.activeChord.displayName(for: manager.activeStrumType))
                     .font(.custom("Inter-Bold", size: 32, relativeTo: .title))
                 
-                Text(manager.activeStrumType == .none ? "—" : manager.activeStrumType.rawValue)
-                    .font(.custom("Inter-SemiBold", size: 18, relativeTo: .headline))
+//                Text(manager.activeStrumType == .none ? "—" : manager.activeStrumType.rawValue)
+//                    .font(.custom("Inter-SemiBold", size: 18, relativeTo: .headline))
             }
             .foregroundStyle(Color("PrimaryBrown"))
             .padding(.bottom, 2)

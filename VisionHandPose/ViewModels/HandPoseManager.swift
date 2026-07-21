@@ -516,6 +516,25 @@ extension MusicalChord {
             }
         }
     }
+    
+    func displayName(for type: StrumChordType) -> String {
+        switch type {
+
+            case .none:
+                return rawValue
+
+            case .chordnormal:
+                // Major tampil "C", Minor tetap "Cm"
+                return rawValue
+
+            case .chord7:
+                if rawValue.hasSuffix("m") {
+                    return rawValue + "7"      // Cm -> Cm7
+                } else {
+                    return rawValue + "maj7"   // C -> Cmaj7
+                }
+        }
+    }
 }
 
 // NotesType type based on vertical position
