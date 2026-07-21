@@ -29,8 +29,8 @@ struct GuideView: View {
     @Binding var path: NavigationPath
     @State private var selectedPart: TutorialPart? = .camera
     @StateObject private var manager = HandPoseManager()
-    @ObservedObject var chordPlayer: ChordPlayer    
-
+    @ObservedObject var chordPlayer: ChordPlayer
+    
     var body: some View {
         NavigationSplitView {
             // Sidebar Navigation (Native Apple iPadOS Sidebar Style)
@@ -89,13 +89,6 @@ struct GuideView: View {
                             tip: "Using the front camera allows you to view real-time hand skeleton tracking directly on screen.",
                             manager: manager,
                             chordPlayer: chordPlayer)
-//                            number: 4,
-//                            logo: part.iconName,
-//                            title: part.rawValue,
-//                            subtitle: "Customize your hand preference (right-handed or left-handed) and adjust camera settings to match your training environment.",
-//                            tip: "Using the front camera allows you to view real-time hand skeleton tracking directly on screen.",
-//                            
-//                        )
                     }
                 } else {
                     ContentUnavailableView(
