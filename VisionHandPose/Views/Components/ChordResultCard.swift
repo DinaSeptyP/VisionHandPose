@@ -18,7 +18,7 @@ struct ChordResultCard: View {
                 .foregroundStyle(Color("PrimaryBrown").opacity(0.8))
             
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(manager.activeChord.rawValue + manager.activeNotesType.suffix)
+                Text(manager.activeChord.rawValue)
                     .font(.custom("Inter-Bold", size: 32, relativeTo: .title))
                 
                 Text(manager.activeStrumType == .none ? "—" : manager.activeStrumType.rawValue)

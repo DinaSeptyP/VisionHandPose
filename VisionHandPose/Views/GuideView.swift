@@ -86,9 +86,16 @@ struct GuideView: View {
                             number: 4,
                             logo: part.iconName,
                             title: part.rawValue,
-                            subtitle: "Customize your hand preference (right-handed or left-handed) and adjust camera settings to match your training environment.",
-                            tip: "Using the front camera allows you to view real-time hand skeleton tracking directly on screen."
-                        )
+                            tip: "Using the front camera allows you to view real-time hand skeleton tracking directly on screen.",
+                            manager: manager,
+                            chordPlayer: chordPlayer)
+//                            number: 4,
+//                            logo: part.iconName,
+//                            title: part.rawValue,
+//                            subtitle: "Customize your hand preference (right-handed or left-handed) and adjust camera settings to match your training environment.",
+//                            tip: "Using the front camera allows you to view real-time hand skeleton tracking directly on screen.",
+//                            
+//                        )
                     }
                 } else {
                     ContentUnavailableView(
