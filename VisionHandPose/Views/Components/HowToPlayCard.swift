@@ -12,7 +12,6 @@ struct HowToPlayCard: View {
     let number: Int
     let logo: String
     let title: String
-    let subtitle: String
     let tip: String
 
     @ObservedObject var manager: HandPoseManager
@@ -27,7 +26,6 @@ struct HowToPlayCard: View {
                     number: number,
                     logo: logo,
                     title: title,
-                    subtitle: subtitle,
                     tip: tip
                 ) {
                     cameraSection
@@ -81,7 +79,6 @@ extension HowToPlayCard {
         number: 2,
         logo: "hand.raised.fill",
         title: "How to Play",
-        subtitle: "Practice forming chords with your left hand and strumming with your right hand.",
         tip: "Keep both hands within their respective screen zones.",
         manager: HandPoseManager(),
         chordPlayer: ChordPlayer()

@@ -12,16 +12,12 @@ struct CameraGuideCard: View {
     
     let number: Int
     let logo: String
-    let title: String 
-    let subtitle: String
+    let title: String
     let tip: String
 
     @ObservedObject var manager: HandPoseManager
     
     var body: some View {
-        
-        
-        
         GeometryReader { geo in
             let height = geo.size.height
             
@@ -30,7 +26,6 @@ struct CameraGuideCard: View {
                     number: number,
                     logo: logo,
                     title: title,
-                    subtitle: subtitle,
                     tip: tip
                 ) {
                     cameraSection
@@ -57,24 +52,6 @@ extension CameraGuideCard {
             }
         }
     }
-    
-    private var tipSection: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "lightbulb.max")
-            
-            Text("Tip: \(tip)")
-        }
-        .font(.custom("Inter", size: 18))
-        .foregroundStyle(Color("PrimaryBrown"))
-        .padding()
-        .background(Color("SecondaryFont").opacity(0.1))
-        .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color("SecondaryFont"),lineWidth: 0.5)
-        }
-        .frame(height: 380)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-    }
 }
 
 #Preview {
@@ -83,7 +60,6 @@ extension CameraGuideCard {
         number: 1,
         logo: "camera.fill",
         title: "Camera Verification",
-        subtitle: "Allow front camera access to enable real-time hand gesture tracking.",
         tip: "Ensure your hands are fully visible and well-lit.",
         manager: HandPoseManager()
     )

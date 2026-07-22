@@ -7,12 +7,7 @@
 
 import SwiftUI
 
-private enum CustomizeStep {
-    case chooseHand
-    case moveStrum
-    case ready
-}
-
+// Wrapper - design GuideCard & live HandTrackingExperienceView
 struct CustomizeExperience: View {
     let number: Int
     let logo: String
@@ -22,112 +17,113 @@ struct CustomizeExperience: View {
     @ObservedObject var manager: HandPoseManager
     @ObservedObject var chordPlayer: ChordPlayer
     
-    @State private var currentStep: CustomizeStep = .chooseHand
-    @State private var showingCustomizeInfo = false
+    @State private var customizeStep = 0
+    @State private var hasChangedHandedness = false
+    @State private var hasResizedStrings = false
+    @State private var hasMovedStrings = false
+    
+    private var dynamicTip: String {
+        switch customizeStep {
+        case 0:
+            return "Choose Left-Handed or Right-Handed from the toolbar."
+        case 1:
+            return "Resize the string spacing by dragging the top or bottom string handle circles."
+        case 2:
+            return "Move the string position by dragging the strings into a comfortable area."
+        default:
+            return "Setup your preferred tuning and finger placement."
+        }
+    }
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                headerSection
-                cameraSection
-                tipSection
-                Spacer(minLength: 0)
+        GeometryReader { geo in
+            let height = geo.size.height
+            
+            ScrollView {
+                GuideCard(
+                    number: number,
+                    logo: logo,
+                    title: title,
+                    tip: dynamicTip
+                ) {
+                    cameraSection
+                        .frame(height: height * 0.65)
+                }
             }
-            .padding(32)
-        }
-        .background(Color("PrimaryFont"))
-        .onAppear {
-            manager.checkPermissionAndStart()
-        }
-        .onChange(of: manager.isRightHanded) {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                currentStep = .moveStrum
+            .background(Color("PrimaryFont"))
+            .onAppear {
+                manager.checkPermissionAndStart()
             }
-        }
-        .alert(
-            "Customize Your Experience",
-            isPresented: $showingCustomizeInfo
-        ) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(
-                "Choose your playing hand, then drag the strings to a comfortable strumming position."
-            )
         }
     }
+    
+    private func updateCustomizeStep() {
+        switch customizeStep {
+        case 0:
+            if hasChangedHandedness {
+                customizeStep = 1
+            }
+            
+        case 1:
+            if hasResizedStrings {
+                customizeStep = 2
+            }
+            
+        case 2:
+            if hasMovedStrings {
+                customizeStep = 3
+            }
+            
+        default:
+            break
+        }
+    }
+    
 }
 
+
+
 extension CustomizeExperience {
-    private var dynamicSubtitle: String {
-        switch currentStep {
-        case .chooseHand:
-            return "Choose Right-Handed or Left-Handed to match your playing style."
-        case .moveStrum:
-            let side = manager.isRightHanded ? "right" : "left"
-            
-            return """
-Great! Now drag the strumming strings on the \(side) side to a comfortable position
-"""
-            
-        case .ready:
-            return """
-You're all set. Your handedness and strumming position are ready to use
-"""
-        }
-    }
-    
-    private var headerSection: some View {
-        GuidePageHeader(
-            number: number,
-            logo: logo,
-            title: title,
-            subtitle: dynamicSubtitle
-        )
-    }
-    
     private var cameraSection: some View {
         Group {
             if manager.cameraPermissionGranted {
                 HandTrackingExperienceView(
                     manager: manager,
                     chordPlayer: chordPlayer,
-                    topContentInset: 48,
                     onStrumPositionChanged: {
-                        guard currentStep == .moveStrum else { return }
-
-                        withAnimation {
-                            currentStep = .ready
-                        }
+                        hasMovedStrings = true
+                        updateCustomizeStep()
+                    },
+                    onStringSpacingChanged: {
+                        hasResizedStrings = true
+                        updateCustomizeStep()
                     }
                 )
+                .overlay(alignment: .top) {
+                    cameraToolbar
+                        .padding(.top, 8)
+                }
             } else {
-                Color.black.opacity(0.08)
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.black.opacity(0.04))
                     .overlay {
                         PermissionRequestView(manager: manager)
+                        
                     }
             }
         }
-        .frame(height: 490)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay(alignment: .top) {
-            cameraToolbar
-                .padding(.top, 8)
-        }
     }
-
+    
     private var cameraToolbar: some View {
         ZStack {
-//            Text("StrumMe")
-//                .font(.custom("Playfair Display", size: 30))
-//                .fontWeight(.bold)
-//                .foregroundStyle(Color("PrimaryDark"))
-
             HStack {
                 Spacer()
-
+                
                 HStack(spacing: 12) {
                     Button {
                         manager.toggleHandedness()
+                        hasChangedHandedness = true
+                        updateCustomizeStep()
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "hand.raised.fill")
@@ -135,14 +131,6 @@ You're all set. Your handedness and strumming position are ready to use
                         }
                         .font(.custom("Inter", size: 13))
                         .foregroundStyle(Color("PrimaryBrown"))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        showingCustomizeInfo = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .foregroundStyle(Color("PrimaryBrown"))
                     }
                     .buttonStyle(.plain)
                 }
@@ -159,16 +147,30 @@ You're all set. Your handedness and strumming position are ready to use
     }
     
     private var tipSection: some View {
-        GuideTipCard(tip: "Tip: \(tip)")
+        HStack(spacing: 12) {
+            Image(systemName: "lightbulb.max")
+            
+            Text("Tip: \(tip)")
+        }
+        .font(.custom("Inter", size: 18))
+        .foregroundStyle(Color("PrimaryBrown"))
+        .padding()
+        .background(Color("SecondaryFont").opacity(0.1))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color("SecondaryFont"),lineWidth: 0.5)
+        }
+        .frame(height: 380)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 }
 
 #Preview {
     CustomizeExperience(
-        number: 4,
-        logo: "gearshape",
-        title: "Customize Your Experience",
-        tip: "You can change this again",
+        number: 2,
+        logo: "hand.raised.fill",
+        title: "How to Play",
+        tip: "Keep both hands within their respective screen zones.",
         manager: HandPoseManager(),
         chordPlayer: ChordPlayer()
     )
