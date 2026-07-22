@@ -134,6 +134,9 @@ struct GuideView: View {
             manager.stopSession()
             manager.cameraPermissionGranted = false
         }
+        .onChange(of: selectedPart){
+            howToPlayStep = 0
+        }
         .onChange(of: manager.chordHand != nil) {
             updateHowToPlayStep()
         }
@@ -143,12 +146,18 @@ struct GuideView: View {
     }
     
     private func updateHowToPlayStep() {
-        if howToPlayStep == 0, manager.chordHand != nil {
-            howToPlayStep = 1
-        }
-
-        if howToPlayStep == 1, manager.strumHand != nil {
-            howToPlayStep = 2
+        switch howToPlayStep {
+        case 0:
+            if manager.chordHand != nil {
+                howToPlayStep = 1
+            }
+            
+        case 1:
+            if manager.strumHand != nil {
+                howToPlayStep = 2
+            }
+        default:
+            break
         }
     }
     

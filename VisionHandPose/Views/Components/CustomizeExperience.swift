@@ -13,7 +13,7 @@ struct CustomizeExperience: View {
     let logo: String
     let title: String
     let tip: String
-
+    
     @ObservedObject var manager: HandPoseManager
     @ObservedObject var chordPlayer: ChordPlayer
     
@@ -58,16 +58,24 @@ struct CustomizeExperience: View {
     }
     
     private func updateCustomizeStep() {
-        if customizeStep == 0, hasChangedHandedness {
-            customizeStep = 1
-        }
-
-        if customizeStep == 1, hasResizedStrings {
-            customizeStep = 2
-        }
-
-        if customizeStep == 2, hasMovedStrings {
-            customizeStep = 3
+        switch customizeStep {
+        case 0:
+            if hasChangedHandedness {
+                customizeStep = 1
+            }
+            
+        case 1:
+            if hasResizedStrings {
+                customizeStep = 2
+            }
+            
+        case 2:
+            if hasMovedStrings {
+                customizeStep = 3
+            }
+            
+        default:
+            break
         }
     }
     
@@ -91,10 +99,10 @@ extension CustomizeExperience {
                         updateCustomizeStep()
                     }
                 )
-                    .overlay(alignment: .top) {
-                        cameraToolbar
-                            .padding(.top, 8)
-                    }
+                .overlay(alignment: .top) {
+                    cameraToolbar
+                        .padding(.top, 8)
+                }
             } else {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.black.opacity(0.04))
@@ -107,41 +115,41 @@ extension CustomizeExperience {
     }
     
     private var cameraToolbar: some View {
-            ZStack {
-                HStack {
-                    Spacer()
-
-                    HStack(spacing: 12) {
-                        Button {
-                            manager.toggleHandedness()
-                            hasChangedHandedness = true
-                            updateCustomizeStep()
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "hand.raised.fill")
-                                Text(manager.isRightHanded ? "Right-Handed" : "Left-Handed")
-                            }
-                            .font(.custom("Inter", size: 13))
-                            .foregroundStyle(Color("PrimaryBrown"))
+        ZStack {
+            HStack {
+                Spacer()
+                
+                HStack(spacing: 12) {
+                    Button {
+                        manager.toggleHandedness()
+                        hasChangedHandedness = true
+                        updateCustomizeStep()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "hand.raised.fill")
+                            Text(manager.isRightHanded ? "Right-Handed" : "Left-Handed")
                         }
-                        .buttonStyle(.plain)
+                        .font(.custom("Inter", size: 13))
+                        .foregroundStyle(Color("PrimaryBrown"))
                     }
-                    .padding(.horizontal, 12)
-                    .frame(height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
+                    .buttonStyle(.plain)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 44)
                 .padding(.horizontal, 12)
+                .frame(height: 36)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
             }
-            
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .padding(.horizontal, 12)
         }
-
+        
+    }
+    
     private var tipSection: some View {
         HStack(spacing: 12) {
             Image(systemName: "lightbulb.max")
-
+            
             Text("Tip: \(tip)")
         }
         .font(.custom("Inter", size: 18))
@@ -150,7 +158,7 @@ extension CustomizeExperience {
         .background(Color("SecondaryFont").opacity(0.1))
         .overlay {
             RoundedRectangle(cornerRadius: 12)
-            .stroke(Color("SecondaryFont"),lineWidth: 0.5)
+                .stroke(Color("SecondaryFont"),lineWidth: 0.5)
         }
         .frame(height: 380)
         .clipShape(RoundedRectangle(cornerRadius: 18))
