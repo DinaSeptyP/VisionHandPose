@@ -11,7 +11,6 @@ struct GuideCard<Content: View>: View {
     let number: Int
     let logo: String
     let title: String
-    let subtitle: String
     let tip: String
     let content: Content
 
@@ -19,14 +18,12 @@ struct GuideCard<Content: View>: View {
         number: Int,
         logo: String,
         title: String,
-        subtitle: String,
         tip: String,
         @ViewBuilder content: () -> Content
     ) {
         self.number = number
         self.logo = logo
         self.title = title
-        self.subtitle = subtitle
         self.tip = tip
         self.content = content()
     }
@@ -63,7 +60,7 @@ struct GuideCard<Content: View>: View {
                     .foregroundStyle(Color("SecondaryFont"))
                 
                 Text(tip)
-                    .font(.custom("Inter-Medium", size: 14, relativeTo: .subheadline))
+                    .font(.custom("Inter-Regular_SemiBold", size: 14, relativeTo: .subheadline))
                     .foregroundStyle(Color("PrimaryBackground").opacity(0.9))
             }
             .padding()
@@ -82,13 +79,16 @@ struct GuideCard<Content: View>: View {
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 4)
             }
-            
-            // Subtitle Description
-            Text(subtitle)
-                .font(.custom("Inter-Regular", size: 16, relativeTo: .body))
-                .foregroundStyle(Color("PrimaryBackground").opacity(0.85))
-                .lineSpacing(4)
         }
+        .onAppear {
+                        // Perulangan untuk mencetak semua font ke konsol Xcode
+                        for family in UIFont.familyNames.sorted() {
+                            print("Family: \(family)")
+                            for font in UIFont.fontNames(forFamilyName: family) {
+                                print("  - \(font)") // Gunakan nama ini di .font(.custom("Nama", size: 16))
+                            }
+                        }
+                    }
         .padding(24)
     }
 }
@@ -99,14 +99,12 @@ extension GuideCard where Content == EmptyView {
         number: Int,
         logo: String,
         title: String,
-        subtitle: String,
         tip: String
     ) {
         self.init(
             number: number,
             logo: logo,
             title: title,
-            subtitle: subtitle,
             tip: tip,
             content: { EmptyView() }
         )
@@ -120,7 +118,6 @@ extension GuideCard where Content == EmptyView {
             number: 1,
             logo: "guitars.fill",
             title: "Position Your Hand",
-            subtitle: "Posisikan telapak tangan Anda menghadap kamera depan secara utuh untuk memulai pendeteksian kunci chord.",
             tip: "Pastikan jarak tangan Anda berkisar antara 30-50 cm dari kamera."
         )
     }
